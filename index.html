@@ -287,62 +287,55 @@
 
 <script>
 /* ============================================================
-   画像フォルダの構成について
+   画像フォルダの構成について（実際のリポジトリ構成に合わせています）
    ------------------------------------------------------------
-   このHTMLファイルと同じ階層に "images" フォルダを作り、
-   その中に各チームのエンブレム画像（png/svg等）を入れてください。
+     index.html
+     └── image/
+         ├── Arsenal.svg
+         ├── Bournemouth.svg
+         ├── Brentford.svg
+         ├── Brighton.svg
+         ├── Chelsea.svg
+         ├── Coventry.svg
+         ├── Everton.svg
+         ├── Forest.svg
+         ├── Fulham.svg
+         ├── Hull.svg
+         ├── Ipswich.svg
+         ├── Leeds.svg
+         ├── Liverpool.svg
+         ├── Man City.svg
+         ├── Man Utd.svg
+         ├── Newcastle.svg
+         ├── Palace.svg
+         ├── Spurs.svg
+         ├── Sunderland.svg
+         └── Villa.svg
 
-   例）フォルダ構成:
-     my-pl-app/
-     ├── pl-calendar.html   ← このファイル
-     └── images/
-         ├── arsenal.png
-         ├── coventry.png
-         ├── hull.png
-         ├── man-utd.png
-         ├── everton.png
-         ├── crystal-palace.png
-         ├── ipswich.png
-         ├── sunderland.png
-         ├── nottm-forest.png
-         ├── leeds.png
-         ├── brentford.png
-         ├── tottenham.png
-         ├── brighton.png
-         ├── aston-villa.png
-         ├── man-city.png
-         ├── bournemouth.png
-         ├── newcastle.png
-         ├── liverpool.png
-         ├── fulham.png
-         └── chelsea.png
-
-   logoUrl を "images/ファイル名" のような相対パスにしておけば、
-   HTMLファイルを開いたときに自動で読み込まれます。
-   画像が無い/パスが間違っている場合は自動でチームカラーの
-   フォールバック画像が表示されるので、アプリが壊れることはありません。
+   フォルダ名は images ではなく image（単数形）です。
+   ファイル名にスペースを含むもの（Man City.svg 等）は %20 でURLエンコードしています。
    ============================================================ */
 const TEAMS = [
-  { code: "ARS", name: "Arsenal FC", color: "#EF0107", dark: false, logoUrl: "images/arsenal.png" },
-  { code: "COV", name: "Coventry City", color: "#78D0F2", dark: true, logoUrl: "images/coventry.png" },
-  { code: "HUL", name: "Hull City", color: "#F18A00", dark: true, logoUrl: "images/hull.png" },
-  { code: "MUN", name: "Manchester United", color: "#DA291C", dark: false, logoUrl: "images/man-utd.png" },
-  { code: "EVE", name: "Everton FC", color: "#003399", dark: false, logoUrl: "images/everton.png" },
-  { code: "CRY", name: "Crystal Palace", color: "#1B458F", dark: false, logoUrl: "images/crystal-palace.png" },
-  { code: "IPS", name: "Ipswich Town", color: "#0044A9", dark: false, logoUrl: "images/ipswich.png" },
-  { code: "SUN", name: "Sunderland AFC", color: "#EB172B", dark: false, logoUrl: "images/sunderland.png" },
-  { code: "NFO", name: "Nottingham Forest", color: "#DD0000", dark: false, logoUrl: "images/nottm-forest.png" },
-  { code: "LEE", name: "Leeds United", color: "#FFCD00", dark: true, logoUrl: "images/leeds.png" },
-  { code: "BRE", name: "Brentford FC", color: "#E30613", dark: false, logoUrl: "images/brentford.png" },
-  { code: "TOT", name: "Tottenham Hotspur", color: "#132257", dark: false, logoUrl: "images/tottenham.png" },
-  { code: "BRI", name: "Brighton & Hove Albion", color: "#0057B8", dark: false, logoUrl: "images/brighton.png" },
-  { code: "AVL", name: "Aston Villa", color: "#670E36", dark: false, logoUrl: "images/aston-villa.png" },
-  { code: "MCI", name: "Manchester City", color: "#6CABDD", dark: true, logoUrl: "images/man-city.png" },
-  { code: "BOU", name: "AFC Bournemouth", color: "#B50E12", dark: false, logoUrl: "images/bournemouth.png" },
-  { code: "NEW", name: "Newcastle United", color: "#241F20", dark: false, logoUrl: "images/newcastle.png" },
-  { code: "LFC", name: "Liverpool FC", color: "#C8102E", dark: false, logoUrl: "images/liverpool.png" },
-  { code: "FUL", name: "Fulham FC", color: "#1A1A1A", dark: false, logoUrl: "images/fulham.png" },
-  { code: "CFC", name: "Chelsea FC", color: "#034694", dark: false, logoUrl: "images/chelsea.png" }
+  { code: "ARS", name: "Arsenal FC", color: "#EF0107", dark: false, logoUrl: "image/Arsenal.svg" },
+  { code: "COV", name: "Coventry City", color: "#78D0F2", dark: true, logoUrl: "image/Coventry.svg" },
+  { code: "HUL", name: "Hull City", color: "#F18A00", dark: true, logoUrl: "image/Hull.svg" },
+  { code: "MUN", name: "Manchester United", color: "#DA291C", dark: false, logoUrl: "image/Man%20Utd.svg" },
+  { code: "EVE", name: "Everton FC", color: "#003399", dark: false, logoUrl: "image/Everton.svg" },
+  { code: "CRY", name: "Crystal Palace", color: "#1B458F", dark: false, logoUrl: "image/Palace.svg" },
+  { code: "IPS", name: "Ipswich Town", color: "#0044A9", dark: false, logoUrl: "image/Ipswich.svg" },
+  { code: "SUN", name: "Sunderland AFC", color: "#EB172B", dark: false, logoUrl: "image/Sunderland.svg" },
+  { code: "NFO", name: "Nottingham Forest", color: "#DD0000", dark: false, logoUrl: "image/Forest.svg" },
+  { code: "LEE", name: "Leeds United", color: "#FFCD00", dark: true, logoUrl: "image/Leeds.svg" },
+  { code: "BRE", name: "Brentford FC", color: "#E30613", dark: false, logoUrl: "image/Brentford.svg" },
+  { code: "TOT", name: "Tottenham Hotspur", color: "#132257", dark: false, logoUrl: "image/Spurs.svg" },
+  { code: "BRI", name: "Brighton & Hove Albion", color: "#0057B8", dark: false, logoUrl: "image/Brighton.svg" },
+  { code: "AVL", name: "Aston Villa", color: "#670E36", dark: false, logoUrl: "image/Villa.svg" },
+  { code: "MCI", name: "Manchester City", color: "#6CABDD", dark: true, logoUrl: "image/Man%20City.svg" },
+  { code: "BOU", name: "AFC Bournemouth", color: "#B50E12", dark: false, logoUrl: "image/Bournemouth.svg" },
+  { code: "NEW", name: "Newcastle United", color: "#241F20", dark: false, logoUrl: "image/Newcastle.svg" },
+  { code: "LFC", name: "Liverpool FC", color: "#C8102E", dark: false, logoUrl: "image/Liverpool.svg" },
+  { code: "FUL", name: "Fulham FC", color: "#1A1A1A", dark: false, logoUrl: "image/Fulham.svg" },
+  { code: "CFC", name: "Chelsea FC", color: "#034694", dark: false, logoUrl: "image/Chelsea.svg" }
 ];
 /* 画像を用意していない場合は、上の logoUrl を "" （空文字）のままにしておいても
    動作します（自動生成のカラー・フォールバック画像が使われます）。 */
@@ -444,7 +437,7 @@ function generateDummyFixtures() {
       シュート数・スタメン・得点者などの詳細スタッツは含まれません。
       その場合は、詳細モーダルのスタッツ欄を自動的に非表示にします。
    ============================================================ */
-const API_KEY = "YOUR_API_KEY"; // ← ここに Football-Data.org のAPIトークンを入力
+const API_KEY = "3224993a6707403aa85e0269ec95855d"; // ← ここに Football-Data.org のAPIトークンを入力
 const API_BASE = "https://api.football-data.org/v4";
 const COMPETITION_CODE = "PL";   // プレミアリーグの大会コード
 const SEASON_YEAR = 2026;        // シーズン開幕年（2026-27シーズンなら2026）
