@@ -442,6 +442,17 @@ const API_BASE = "https://api.football-data.org/v4";
 const COMPETITION_CODE = "PL";   // プレミアリーグの大会コード
 const SEASON_YEAR = 2026;        // シーズン開幕年（2026-27シーズンなら2026）
 
+/* Football-Data.org はブラウザからの直接アクセス（CORS）を許可していないため、
+   GitHub Pages 等の静的サイトから素の fetch で叩くと大抵ブロックされる。
+   自前のプロキシ（Cloudflare Worker等）を用意した場合は、そのURLをここに入れると
+   プロキシ経由でアクセスするようになる。空文字なら直接アクセスを試みる。
+   例: "https://your-worker.example.workers.dev/pl-proxy" */
+const PROXY_BASE_URL = "https://dry-bush-6a8f.ipodpro-kazuma.workers.dev/pl-proxy";
+
+function apiUrl(path) {
+  return PROXY_BASE_URL ? `${PROXY_BASE_URL}${path}` : `${API_BASE}${path}`;
+}
+
 // Football-Data.org の TLA（3文字略称）と、このアプリ内のチームコードの対応表。
 // 表記が食い違うチームがあれば、ここに追記してください。
 const TLA_TO_CODE = {
@@ -488,18 +499,36 @@ function mapApiMatch(m) {
   };
 }
 
+let lastFetchError = null;
+
 async function fetchFixturesFromAPI() {
-  if (!API_KEY || API_KEY === "YOUR_API_KEY") return null;
+  if (!API_KEY || API_KEY === "YOUR_API_KEY") {
+    lastFetchError = 'no-key';
+    return null;
+  }
   try {
-    const res = await fetch(`${API_BASE}/competitions/${COMPETITION_CODE}/matches?season=${SEASON_YEAR}`, {
+    const res = await fetch(apiUrl(`/competitions/${COMPETITION_CODE}/matches?season=${SEASON_YEAR}`), {
       headers: { 'X-Auth-Token': API_KEY }
     });
-    if (!res.ok) throw new Error('Football-Data.org API error: ' + res.status);
+    if (res.status === 403) { lastFetchError = 'auth: APIキーが無効、または未登録です（403）。'; return null; }
+    if (res.status === 429) { lastFetchError = 'rate-limit: リクエスト回数の上限に達しました（429）。少し時間を置いて再読み込みしてください。'; return null; }
+    if (!res.ok) { lastFetchError = `http-${res.status}: APIが ${res.status} を返しました。`; return null; }
     const data = await res.json();
-    if (!data.matches || !data.matches.length) return null;
+    if (!data.matches || !data.matches.length) {
+      lastFetchError = `empty: season=${SEASON_YEAR} の試合データが0件でした（対象シーズンがまだ登録されていない可能性があります）。`;
+      return null;
+    }
+    lastFetchError = null;
     return data.matches.map(mapApiMatch);
   } catch (err) {
-    console.warn('[PL Calendar] APIからの取得に失敗したため、ダミーデータを表示します。', err);
+    // fetchがネットワークエラーやCORSブロックで失敗すると、ブラウザは詳細を隠して
+    // 単なる TypeError("Failed to fetch") しか返さない仕様になっている。
+    if (err instanceof TypeError) {
+      lastFetchError = 'cors-or-network: ブラウザからのAPI直接アクセスがブロックされました（CORS制限、通信エラー、広告ブロッカー等の可能性）。';
+    } else {
+      lastFetchError = 'unknown: ' + err.message;
+    }
+    console.warn('[PL Calendar] APIからの取得に失敗したため、ダミーデータを表示します。詳細:', err);
     return null;
   }
 }
@@ -515,7 +544,11 @@ async function initFixtures() {
     usingLiveData = true;
     if (note) note.textContent = '📡 Football-Data.org からライブデータを取得中です。';
   } else {
-    if (note) note.textContent = '🧪 サンプル（ダミー）データを表示中です。API_KEY を設定すると本番データに切り替わります。';
+    let reason = '';
+    if (lastFetchError === 'no-key') reason = 'APIキーが未設定です。';
+    else if (lastFetchError) reason = lastFetchError.replace(/^[a-z-]+:\s*/, '');
+    if (note) note.textContent = `🧪 サンプル（ダミー）データを表示中です。${reason ? '理由: ' + reason : ''}`;
+    console.info('[PL Calendar] データソース診断コード:', lastFetchError);
   }
   mwFilter.innerHTML = `<option value="">全${Math.max(...fixtures.map(f => f.mw), 38)}節</option>` +
     Array.from(new Set(fixtures.map(f => f.mw))).sort((a, b) => a - b).map(n => `<option value="${n}">第${n}節</option>`).join('');
