@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premier League — Matchday Calendar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pitch-dark: #0c2e22;
+    --pitch: #0f3d2c;
+    --pitch-light: #145038;
+    --chalk: #f3efe2;
+    --chalk-dim: #ded8c4;
+    --ink: #12211a;
+    --ink-soft: #4d5a4f;
+    --gold: #d9a441;
+    --gold-deep: #a97a24;
+    --line: rgba(243,239,226,0.16);
+    --card: #fbf9f2;
+    --card-line: rgba(18,33,26,0.1);
+    --loss: #ad4a42;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--pitch-dark); font-family: 'Inter', sans-serif; color: var(--chalk); }
+  body {
+    background-image:
+      repeating-linear-gradient(90deg, var(--pitch-light) 0px, var(--pitch-light) 1px, transparent 1px, transparent 90px),
+      linear-gradient(180deg, var(--pitch) 0%, var(--pitch-dark) 100%);
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 40px 22px 80px; }
+  button { font-family: inherit; }
+
+  .kicker { font-family: 'Oswald', sans-serif; font-size: 13px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--gold); margin: 0 0 6px; }
+  h1 { font-family: 'Anton', sans-serif; font-weight: 400; font-size: clamp(38px, 7vw, 64px); line-height: 0.95; letter-spacing: 0.01em; margin: 0 0 4px; text-transform: uppercase; }
+  h1 span { color: var(--gold); }
+  .sub { font-size: 14px; color: var(--chalk-dim); margin: 0 0 26px; max-width: 560px; line-height: 1.6; }
+
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
+  .select {
+    appearance: none; background: var(--pitch-light); color: var(--chalk);
+    border: 1px solid var(--line); border-radius: 999px; padding: 8px 32px 8px 16px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0L5 6L10 0' fill='none' stroke='%23f3efe2' stroke-width='1.4'/></svg>");
+    background-repeat: no-repeat; background-position: right 14px center;
+  }
+  .chip-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: transparent; border: 1px solid var(--line); color: var(--chalk-dim);
+    border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 500; cursor: pointer;
+  }
+  .chip-btn.active { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+  .chip-btn:hover:not(.active) { border-color: var(--gold-deep); color: var(--gold); }
+  .spacer { flex: 1; }
+
+  .view-toggle { display: flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+  .view-toggle button {
+    background: transparent; border: none; color: var(--chalk-dim); padding: 8px 16px;
+    font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Oswald', sans-serif; letter-spacing: 0.03em;
+  }
+  .view-toggle button.active { background: var(--gold); color: var(--ink); }
+
+  .tz-toggle { display: flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+  .tz-toggle button { background: transparent; border: none; color: var(--chalk-dim); padding: 8px 14px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .tz-toggle button.active { background: var(--pitch-light); color: var(--gold); }
+
+  .fav-wrap { position: relative; }
+  .fav-panel {
+    display: none; position: absolute; top: 42px; left: 0; z-index: 20;
+    background: var(--card); color: var(--ink); border-radius: 12px; padding: 14px;
+    width: 240px; box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+  }
+  .fav-panel.open { display: block; }
+  .fav-panel p { margin: 0 0 10px; font-size: 12px; color: var(--ink-soft); letter-spacing: 0.03em; }
+  .fav-list { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; }
+  .fav-row { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+  .fav-row input { accent-color: var(--gold-deep); }
+
+  .day-group { margin-bottom: 30px; }
+  .day-heading { font-family: 'Oswald', sans-serif; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); display: flex; align-items: center; gap: 12px; margin: 0 0 12px; }
+  .day-heading .mw { color: var(--chalk-dim); font-weight: 400; }
+  .day-heading::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+  .match {
+    position: relative; background: var(--card); color: var(--ink); border-radius: 14px;
+    padding: 14px 44px 14px 18px; margin-bottom: 10px; cursor: pointer;
+    transition: box-shadow 0.15s ease;
+  }
+  .match:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.25); }
+  .match.fav-match::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--gold); border-radius: 14px 0 0 14px; z-index: 2; }
+  .match-row { display: grid; grid-template-columns: 60px 1fr; align-items: center; gap: 14px; }
+  .kickoff { font-family: 'Oswald', sans-serif; text-align: center; line-height: 1.15; }
+  .kickoff .time { font-size: 18px; font-weight: 600; }
+  .kickoff .tzlabel { font-size: 10px; color: var(--ink-soft); letter-spacing: 0.05em; }
+  .kickoff .status { font-size: 10px; color: var(--loss); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .kickoff .status.upcoming { color: var(--gold-deep); }
+
+  .teams { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
+  .side {
+    position: relative; overflow: hidden; display: flex; align-items: center; gap: 8px;
+    flex: 1; min-width: 0; padding: 6px 4px; border-radius: 10px;
+  }
+  .side.home { justify-content: flex-end; text-align: right; }
+  .side.away { justify-content: flex-start; text-align: left; flex-direction: row-reverse; }
+  .side-watermark {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 78px; height: 78px; object-fit: contain; opacity: 0.13;
+    pointer-events: none; z-index: 0;
+  }
+  .side-watermark.wm-home { left: -10px; }
+  .side-watermark.wm-away { right: -10px; }
+  .crest {
+    position: relative; z-index: 1; flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px;
+    object-fit: contain; background: rgba(18,33,26,0.04);
+  }
+  .side-label { position: relative; z-index: 1; display: flex; flex-direction: column; min-width: 0; }
+  .side.home .side-label { align-items: flex-end; }
+  .side.away .side-label { align-items: flex-start; }
+  .team-name { font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+  .ha-tag { font-size: 9px; letter-spacing: 0.1em; color: var(--ink-soft); text-transform: uppercase; }
+  .score { position: relative; z-index: 1; font-family: 'Anton', sans-serif; font-size: 20px; flex-shrink: 0; min-width: 44px; text-align: center; }
+  .score .sep { color: var(--ink-soft); font-size: 14px; margin: 0 3px; }
+  .vs-label { position: relative; z-index: 1; font-family: 'Oswald', sans-serif; font-size: 13px; color: var(--chalk-dim); flex-shrink: 0; }
+
+  .bookmark-btn { position: absolute; top: 10px; right: 10px; z-index: 3; background: none; border: none; cursor: pointer; padding: 4px; color: var(--ink-soft); }
+  .bookmark-btn.on { color: var(--gold-deep); }
+  .bookmark-btn svg { width: 18px; height: 18px; display: block; }
+
+  .odds-line { margin-top: 10px; display: flex; align-items: center; gap: 8px; }
+  .odds-bar { flex: 1; height: 5px; border-radius: 999px; overflow: hidden; display: flex; background: #e5e0d0; }
+  .odds-bar .home { background: var(--gold-deep); }
+  .odds-bar .draw { background: #c9c2a8; }
+  .odds-bar .away { background: var(--pitch); }
+  .odds-pct { font-size: 10px; color: var(--ink-soft); white-space: nowrap; }
+
+  .cal-nav { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 18px; }
+  .cal-nav button { background: var(--pitch-light); border: 1px solid var(--line); color: var(--chalk); border-radius: 999px; width: 34px; height: 34px; cursor: pointer; font-size: 16px; }
+  .cal-nav .cal-month { font-family: 'Oswald', sans-serif; font-size: 16px; letter-spacing: 0.06em; min-width: 160px; text-align: center; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 24px; }
+  .cal-dow { font-size: 11px; text-align: center; color: var(--chalk-dim); letter-spacing: 0.05em; padding-bottom: 4px; }
+  .cal-cell {
+    background: var(--pitch-light); border: 1px solid transparent; border-radius: 10px; min-height: 64px;
+    padding: 6px; cursor: default; display: flex; flex-direction: column; gap: 4px;
+  }
+  .cal-cell.empty { background: transparent; }
+  .cal-cell.has-match { cursor: pointer; }
+  .cal-cell.selected { border-color: var(--gold); }
+  .cal-cell .date-num { font-family: 'Oswald', sans-serif; font-size: 12px; color: var(--chalk-dim); }
+  .cal-dot-row { display: flex; flex-wrap: wrap; gap: 3px; }
+  .cal-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+  .cal-selected-heading { font-family: 'Oswald', sans-serif; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin: 0 0 12px; }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(6,18,13,0.72); z-index: 100;
+    align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card); color: var(--ink); border-radius: 16px; width: 100%; max-width: 640px;
+    padding: 26px 26px 30px; position: relative;
+  }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; cursor: pointer; color: var(--ink-soft); font-size: 20px; line-height: 1; }
+  .modal-head { text-align: center; margin-bottom: 20px; }
+  .modal-mw { font-family: 'Oswald', sans-serif; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold-deep); margin: 0 0 10px; }
+  .modal-teams { display: flex; align-items: center; justify-content: center; gap: 22px; }
+  .modal-team { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 140px; }
+  .modal-crest { width: 52px; height: 52px; border-radius: 12px; object-fit: contain; background: rgba(18,33,26,0.04); }
+  .modal-team-name { font-size: 13px; font-weight: 600; text-align: center; }
+  .modal-score { font-family: 'Anton', sans-serif; font-size: 40px; }
+  .modal-sub { font-size: 11px; color: var(--ink-soft); text-align: center; margin-top: 14px; }
+
+  .cal-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .cal-btn {
+    flex: 1; text-align: center; font-family: 'Oswald', sans-serif; font-size: 12.5px; letter-spacing: 0.03em;
+    background: var(--pitch); color: var(--chalk); border: none; border-radius: 999px;
+    padding: 10px 14px; cursor: pointer; text-decoration: none; display: inline-flex;
+    align-items: center; justify-content: center; gap: 6px;
+  }
+  .cal-btn:hover { background: var(--pitch-light); }
+  .cal-btn.outline { background: transparent; color: var(--ink); border: 1px solid var(--card-line); }
+
+  .section-title { font-family: 'Oswald', sans-serif; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); margin: 22px 0 10px; }
+  .stat-row { display: grid; grid-template-columns: 50px 1fr 50px; align-items: center; gap: 10px; font-size: 12px; margin-bottom: 8px; }
+  .stat-row .num { font-weight: 600; }
+  .stat-row .num.home-num { text-align: right; }
+  .stat-track { height: 6px; border-radius: 999px; background: #e5e0d0; overflow: hidden; display: flex; }
+  .stat-track .h { background: var(--gold-deep); }
+  .stat-track .a { background: var(--pitch); }
+  .stat-label { text-align: center; font-size: 10px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; grid-column: 1 / -1; margin-bottom: 2px; }
+
+  .lineup-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .lineup-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .lineup-list li { font-size: 12px; display: flex; justify-content: space-between; gap: 6px; border-bottom: 1px dashed var(--card-line); padding-bottom: 4px; }
+
+  .scorers-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .scorer-item { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+  .scorer-item .mins { color: var(--ink-soft); font-size: 11px; }
+
+  .footnote { margin-top: 34px; font-size: 12px; color: var(--chalk-dim); line-height: 1.7; border-top: 1px dashed var(--line); padding-top: 16px; }
+
+  @media (max-width: 680px) {
+    .toolbar { gap: 8px; }
+    .select, .chip-btn { font-size: 12px; padding: 7px 12px; }
+    .select { padding-right: 28px; }
+  }
+
+  @media (max-width: 600px) {
+    .odds-line { display: none; }
+    .team-name { max-width: 110px; font-size: 12.5px; }
+    .crest { width: 26px; height: 26px; }
+    .side-watermark { width: 60px; height: 60px; opacity: 0.11; }
+    .score { font-size: 17px; min-width: 34px; }
+    .lineup-cols, .scorers-cols { grid-template-columns: 1fr; }
+    .modal-teams { gap: 12px; }
+    .modal-team { width: 110px; }
+    .cal-actions { flex-direction: column; }
+  }
+
+  @media (max-width: 460px) {
+    .wrap { padding: 28px 14px 60px; }
+    .match { padding: 12px 40px 12px 14px; }
+    .match-row { grid-template-columns: 1fr; }
+    .kickoff {
+      grid-column: 1 / -1; display: flex; flex-direction: row; align-items: baseline;
+      gap: 8px; justify-content: flex-start; text-align: left;
+      padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px dashed var(--card-line);
+    }
+    .kickoff .tzlabel { order: 2; }
+    .kickoff .status { margin-left: auto; }
+    .teams { grid-column: 1 / -1; gap: 6px; }
+    .team-name { max-width: 84px; font-size: 12px; }
+    .ha-tag { font-size: 8px; }
+    .crest { width: 24px; height: 24px; }
+    .side-watermark { width: 50px; height: 50px; }
+    .score { font-size: 16px; min-width: 30px; }
+    .modal { padding: 20px 16px 24px; }
+    .modal-score { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="kicker">2026-27 season · 全38節対応</p>
+  <h1>Kickoff<br><span>Calendar</span></h1>
+  <p class="sub">プレミアリーグ 2026-27シーズンの全日程。チーム・節での絞り込み、お気に入り登録、ブックマーク、日本時間／現地時間の切り替えに対応しています。</p>
+  <p class="sub" id="dataSourceNote" style="margin-top:-14px;font-size:12px;">📡 データ確認中…</p>
+
+  <div class="toolbar">
+    <select class="select" id="teamFilter"></select>
+    <select class="select" id="mwFilter"></select>
+
+    <div class="fav-wrap">
+      <button class="chip-btn" id="favToggleBtn">★ お気に入り</button>
+      <div class="fav-panel" id="favPanel">
+        <p>お気に入りチームを選択</p>
+        <div class="fav-list" id="favList"></div>
+      </div>
+    </div>
+    <button class="chip-btn" id="favOnlyBtn">お気に入りのみ</button>
+    <button class="chip-btn" id="bookmarkOnlyBtn">🔖 ブックマークのみ</button>
+
+    <div class="spacer"></div>
+    <div class="tz-toggle" id="tzToggle">
+      <button data-tz="jst" class="active">JST</button>
+      <button data-tz="local">UK現地時間</button>
+    </div>
+    <div class="view-toggle" id="viewToggle">
+      <button data-view="list" class="active">リスト</button>
+      <button data-view="calendar">カレンダー</button>
+    </div>
+  </div>
+
+  <div id="listView"></div>
+  <div id="calendarView" style="display:none;"></div>
+
+  <p class="footnote">
+    試合結果・スタッツ・スタメンはアプリのデータ構造を示すためのダミーデータです（第1〜6節を「終了済み」として例示）。実データに接続する場合は fixtures 配列を API レスポンスに差し替えてください。<br>
+    勝敗予想（Win probability）は参考値です。お気に入り・ブックマークは端末のブラウザ内（localStorage）に保存されます。
+  </p>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+/* ============================================================
+   画像フォルダの構成について
+   ------------------------------------------------------------
+   このHTMLファイルと同じ階層に "images" フォルダを作り、
+   その中に各チームのエンブレム画像（png/svg等）を入れてください。
+
+   例）フォルダ構成:
+     my-pl-app/
+     ├── pl-calendar.html   ← このファイル
+     └── images/
+         ├── arsenal.png
+         ├── coventry.png
+         ├── hull.png
+         ├── man-utd.png
+         ├── everton.png
+         ├── crystal-palace.png
+         ├── ipswich.png
+         ├── sunderland.png
+         ├── nottm-forest.png
+         ├── leeds.png
+         ├── brentford.png
+         ├── tottenham.png
+         ├── brighton.png
+         ├── aston-villa.png
+         ├── man-city.png
+         ├── bournemouth.png
+         ├── newcastle.png
+         ├── liverpool.png
+         ├── fulham.png
+         └── chelsea.png
+
+   logoUrl を "images/ファイル名" のような相対パスにしておけば、
+   HTMLファイルを開いたときに自動で読み込まれます。
+   画像が無い/パスが間違っている場合は自動でチームカラーの
+   フォールバック画像が表示されるので、アプリが壊れることはありません。
+   ============================================================ */
+const TEAMS = [
+  { code: "ARS", name: "Arsenal FC", color: "#EF0107", dark: false, logoUrl: "images/arsenal.png" },
+  { code: "COV", name: "Coventry City", color: "#78D0F2", dark: true, logoUrl: "images/coventry.png" },
+  { code: "HUL", name: "Hull City", color: "#F18A00", dark: true, logoUrl: "images/hull.png" },
+  { code: "MUN", name: "Manchester United", color: "#DA291C", dark: false, logoUrl: "images/man-utd.png" },
+  { code: "EVE", name: "Everton FC", color: "#003399", dark: false, logoUrl: "images/everton.png" },
+  { code: "CRY", name: "Crystal Palace", color: "#1B458F", dark: false, logoUrl: "images/crystal-palace.png" },
+  { code: "IPS", name: "Ipswich Town", color: "#0044A9", dark: false, logoUrl: "images/ipswich.png" },
+  { code: "SUN", name: "Sunderland AFC", color: "#EB172B", dark: false, logoUrl: "images/sunderland.png" },
+  { code: "NFO", name: "Nottingham Forest", color: "#DD0000", dark: false, logoUrl: "images/nottm-forest.png" },
+  { code: "LEE", name: "Leeds United", color: "#FFCD00", dark: true, logoUrl: "images/leeds.png" },
+  { code: "BRE", name: "Brentford FC", color: "#E30613", dark: false, logoUrl: "images/brentford.png" },
+  { code: "TOT", name: "Tottenham Hotspur", color: "#132257", dark: false, logoUrl: "images/tottenham.png" },
+  { code: "BRI", name: "Brighton & Hove Albion", color: "#0057B8", dark: false, logoUrl: "images/brighton.png" },
+  { code: "AVL", name: "Aston Villa", color: "#670E36", dark: false, logoUrl: "images/aston-villa.png" },
+  { code: "MCI", name: "Manchester City", color: "#6CABDD", dark: true, logoUrl: "images/man-city.png" },
+  { code: "BOU", name: "AFC Bournemouth", color: "#B50E12", dark: false, logoUrl: "images/bournemouth.png" },
+  { code: "NEW", name: "Newcastle United", color: "#241F20", dark: false, logoUrl: "images/newcastle.png" },
+  { code: "LFC", name: "Liverpool FC", color: "#C8102E", dark: false, logoUrl: "images/liverpool.png" },
+  { code: "FUL", name: "Fulham FC", color: "#1A1A1A", dark: false, logoUrl: "images/fulham.png" },
+  { code: "CFC", name: "Chelsea FC", color: "#034694", dark: false, logoUrl: "images/chelsea.png" }
+];
+/* 画像を用意していない場合は、上の logoUrl を "" （空文字）のままにしておいても
+   動作します（自動生成のカラー・フォールバック画像が使われます）。 */
+const teamByCode = Object.fromEntries(TEAMS.map(t => [t.code, t]));
+
+function roundRobinPairs(teams) {
+  const n = teams.length;
+  const fixed = teams[0];
+  let rotating = teams.slice(1);
+  const rounds = [];
+  for (let r = 0; r < n - 1; r++) {
+    const full = [fixed, ...rotating];
+    const round = [];
+    for (let i = 0; i < n / 2; i++) {
+      const a = full[i], b = full[n - 1 - i];
+      round.push(r % 2 === 0 ? [a, b] : [b, a]);
+    }
+    rounds.push(round);
+    rotating.unshift(rotating.pop());
+  }
+  return rounds;
+}
+const codes = TEAMS.map(t => t.code);
+const firstLeg = roundRobinPairs(codes);
+const secondLeg = firstLeg.map(round => round.map(([h, a]) => [a, h]));
+const allRounds = [...firstLeg, ...secondLeg];
+
+const KO_HOURS_UTC = [11, 12, 13, 14, 14, 14, 15, 16, 17, 19];
+const SEASON_START = Date.UTC(2026, 7, 22);
+
+function seededRand(seed) {
+  let x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+function genLineup(code) {
+  const positions = ["GK", "DF", "DF", "DF", "DF", "MF", "MF", "MF", "FW", "FW", "FW"];
+  return positions.map((pos, i) => `${pos} ${code}選手${i + 1}`);
+}
+function genScorers(code, goals, seed) {
+  const list = [];
+  for (let i = 0; i < goals; i++) {
+    const minute = Math.floor(seededRand(seed + i) * 90) + 1;
+    const player = Math.floor(seededRand(seed + i + 5) * 11) + 1;
+    const assist = Math.floor(seededRand(seed + i + 15) * 11) + 1;
+    list.push({ player: `${code}選手${player}`, minute, assist: player !== assist ? `${code}選手${assist}` : null });
+  }
+  return list.sort((a, b) => a.minute - b.minute);
+}
+
+function generateDummyFixtures() {
+  const list = [];
+  allRounds.forEach((round, ri) => {
+    const mw = ri + 1;
+    const baseDay = SEASON_START + ri * 7 * 86400000;
+    round.forEach(([home, away], mi) => {
+      const hourUtc = KO_HOURS_UTC[mi % KO_HOURS_UTC.length];
+      const start = new Date(baseDay + hourUtc * 3600000);
+      const id = `mw${mw}-${home}-${away}`;
+      const seed = mw * 137 + mi * 29;
+      const finished = mw <= 6;
+      let result = null;
+      if (finished) {
+        const hg = Math.floor(seededRand(seed) * 4);
+        const ag = Math.floor(seededRand(seed + 1) * 4);
+        const hPos = Math.round(35 + seededRand(seed + 2) * 30);
+        result = {
+          home: hg, away: ag,
+          possession: { home: hPos, away: 100 - hPos },
+          shots: { home: Math.floor(6 + seededRand(seed + 3) * 12), away: Math.floor(6 + seededRand(seed + 4) * 12) },
+          onTarget: { home: Math.floor(2 + seededRand(seed + 5) * 6), away: Math.floor(2 + seededRand(seed + 6) * 6) },
+          corners: { home: Math.floor(seededRand(seed + 7) * 9), away: Math.floor(seededRand(seed + 8) * 9) },
+          fouls: { home: Math.floor(5 + seededRand(seed + 9) * 8), away: Math.floor(5 + seededRand(seed + 10) * 8) },
+          scorers: { home: genScorers(home, hg, seed + 11), away: genScorers(away, ag, seed + 21) },
+          lineups: { home: genLineup(home), away: genLineup(away) }
+        };
+      }
+      const hProb = Math.round(30 + seededRand(seed + 30) * 40);
+      const aProb = Math.round(seededRand(seed + 31) * (95 - hProb));
+      const dProb = 100 - hProb - aProb;
+      list.push({
+        id, mw, home, away, start: start.toISOString(),
+        prob: { home: hProb, draw: Math.max(dProb, 5), away: Math.max(aProb, 5) },
+        finished, result, source: 'dummy'
+      });
+    });
+  });
+  return list;
+}
+
+/* ============================================================
+   本番API連携（Football-Data.org）
+   ------------------------------------------------------------
+   1. https://www.football-data.org/client/register で無料アカウントを作成し、
+      発行された API トークンを下の API_KEY にそのまま貼り付けてください。
+   2. API_KEY が "YOUR_API_KEY" のままの場合は、これまで通りダミーデータで
+      動作します（キー未設定でもアプリが壊れないようにするための安全策です）。
+   3. 無料プランでは「日程・スコア」は取得できますが、ボール支配率や
+      シュート数・スタメン・得点者などの詳細スタッツは含まれません。
+      その場合は、詳細モーダルのスタッツ欄を自動的に非表示にします。
+   ============================================================ */
+const API_KEY = "YOUR_API_KEY"; // ← ここに Football-Data.org のAPIトークンを入力
+const API_BASE = "https://api.football-data.org/v4";
+const COMPETITION_CODE = "PL";   // プレミアリーグの大会コード
+const SEASON_YEAR = 2026;        // シーズン開幕年（2026-27シーズンなら2026）
+
+// Football-Data.org の TLA（3文字略称）と、このアプリ内のチームコードの対応表。
+// 表記が食い違うチームがあれば、ここに追記してください。
+const TLA_TO_CODE = {
+  ARS: "ARS", AVL: "AVL", BOU: "BOU", BRE: "BRE", BHA: "BRI",
+  CHE: "CFC", CRY: "CRY", EVE: "EVE", FUL: "FUL", LIV: "LFC",
+  MCI: "MCI", MUN: "MUN", NEW: "NEW", NFO: "NFO", TOT: "TOT",
+  SUN: "SUN", LEE: "LEE", COV: "COV", HUL: "HUL", IPS: "IPS", WHU: "WHU"
+};
+
+// APIが返すチームがTEAMS配列に無い場合、クラッシュしないよう自動で仮登録する
+function ensureTeamExists(code, apiTeam) {
+  if (teamByCode[code]) return;
+  const t = { code, name: apiTeam.name || code, color: "#5f6b62", dark: false, logoUrl: apiTeam.crest || "" };
+  TEAMS.push(t);
+  teamByCode[code] = t;
+}
+
+function mapApiMatch(m) {
+  const homeCode = TLA_TO_CODE[m.homeTeam.tla] || m.homeTeam.tla || m.homeTeam.shortName;
+  const awayCode = TLA_TO_CODE[m.awayTeam.tla] || m.awayTeam.tla || m.awayTeam.shortName;
+  ensureTeamExists(homeCode, m.homeTeam);
+  ensureTeamExists(awayCode, m.awayTeam);
+
+  const finished = m.status === 'FINISHED';
+  const ft = m.score && m.score.fullTime ? m.score.fullTime : null;
+  const result = (finished && ft && ft.home !== null && ft.away !== null) ? {
+    home: ft.home, away: ft.away,
+    // 無料プランではスタッツが返らないため null にしておき、モーダル側で非表示にする
+    possession: null, shots: null, onTarget: null, corners: null, fouls: null,
+    scorers: { home: [], away: [] },
+    lineups: { home: [], away: [] }
+  } : null;
+
+  return {
+    id: `fd-${m.id}`,
+    mw: m.matchday || 0,
+    home: homeCode,
+    away: awayCode,
+    start: m.utcDate,
+    prob: null, // 実データ利用時は予想勝率を表示しない（未提供のため）
+    finished,
+    result,
+    source: 'api'
+  };
+}
+
+async function fetchFixturesFromAPI() {
+  if (!API_KEY || API_KEY === "YOUR_API_KEY") return null;
+  try {
+    const res = await fetch(`${API_BASE}/competitions/${COMPETITION_CODE}/matches?season=${SEASON_YEAR}`, {
+      headers: { 'X-Auth-Token': API_KEY }
+    });
+    if (!res.ok) throw new Error('Football-Data.org API error: ' + res.status);
+    const data = await res.json();
+    if (!data.matches || !data.matches.length) return null;
+    return data.matches.map(mapApiMatch);
+  } catch (err) {
+    console.warn('[PL Calendar] APIからの取得に失敗したため、ダミーデータを表示します。', err);
+    return null;
+  }
+}
+
+let fixtures = generateDummyFixtures();
+let usingLiveData = false;
+
+async function initFixtures() {
+  const apiFixtures = await fetchFixturesFromAPI();
+  const note = document.getElementById('dataSourceNote');
+  if (apiFixtures && apiFixtures.length) {
+    fixtures = apiFixtures;
+    usingLiveData = true;
+    if (note) note.textContent = '📡 Football-Data.org からライブデータを取得中です。';
+  } else {
+    if (note) note.textContent = '🧪 サンプル（ダミー）データを表示中です。API_KEY を設定すると本番データに切り替わります。';
+  }
+  mwFilter.innerHTML = `<option value="">全${Math.max(...fixtures.map(f => f.mw), 38)}節</option>` +
+    Array.from(new Set(fixtures.map(f => f.mw))).sort((a, b) => a - b).map(n => `<option value="${n}">第${n}節</option>`).join('');
+  renderAll();
+}
+
+let state = {
+  team: '', mw: '', favOnly: false, bookmarkOnly: false,
+  view: 'list', tz: 'jst', calMonthOffset: 0, calSelectedDay: null
+};
+let favorites = JSON.parse(localStorage.getItem('pl_favorite_teams') || '[]');
+let bookmarks = JSON.parse(localStorage.getItem('pl_bookmarks') || '[]');
+function saveFavorites() { localStorage.setItem('pl_favorite_teams', JSON.stringify(favorites)); }
+function saveBookmarks() { localStorage.setItem('pl_bookmarks', JSON.stringify(bookmarks)); }
+
+/* 「現地時間」は視聴者の端末設定に依存させず、常にイギリス（ロンドン）時間で表示する。
+   Europe/London は夏時間(BST, UTC+1)・冬時間(GMT, UTC+0)をブラウザが自動判定してくれる。 */
+function tzZone() { return state.tz === 'jst' ? 'Asia/Tokyo' : 'Europe/London'; }
+function fmtTime(date) {
+  return new Intl.DateTimeFormat('ja-JP', { timeZone: tzZone(), hour: '2-digit', minute: '2-digit', hour12: false }).format(date);
+}
+function fmtDayLabel(date) {
+  return new Intl.DateTimeFormat('ja-JP', { timeZone: tzZone(), month: 'long', day: 'numeric', weekday: 'short' }).format(date);
+}
+function fmtDayKey(date) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: tzZone(), year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+}
+function tzLabelFor(date) {
+  if (state.tz === 'jst') return 'JST';
+  const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', timeZoneName: 'short', hour: '2-digit' }).formatToParts(date);
+  const tzPart = parts.find(p => p.type === 'timeZoneName');
+  return tzPart ? tzPart.value.replace('GMT', 'GMT') : 'UK';
+}
+
+function fallbackLogoDataUri(code) {
+  const t = teamByCode[code];
+  const textColor = t.dark ? '#12211a' : '#f3efe2';
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='${t.color}'/><text x='50' y='60' font-family='Oswald,sans-serif' font-size='34' font-weight='600' fill='${textColor}' text-anchor='middle'>${code}</text></svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+function logoSrc(code) {
+  const t = teamByCode[code];
+  return (t.logoUrl && t.logoUrl.trim()) ? t.logoUrl.trim() : fallbackLogoDataUri(code);
+}
+function crestImg(code, size, extraClass) {
+  const t = teamByCode[code];
+  const fb = fallbackLogoDataUri(code);
+  return `<img src="${logoSrc(code)}" onerror="this.onerror=null;this.src='${fb}';" class="crest ${extraClass || ''}" style="width:${size}px;height:${size}px;" alt="${t.name}">`;
+}
+function watermarkImg(code, side) {
+  const fb = fallbackLogoDataUri(code);
+  return `<img src="${logoSrc(code)}" onerror="this.onerror=null;this.src='${fb}';" class="side-watermark wm-${side}" alt="" aria-hidden="true">`;
+}
+
+function applyFilters(list) {
+  return list.filter(f => {
+    if (state.team && f.home !== state.team && f.away !== state.team) return false;
+    if (state.mw && f.mw !== Number(state.mw)) return false;
+    if (state.favOnly && !(favorites.includes(f.home) || favorites.includes(f.away))) return false;
+    if (state.bookmarkOnly && !bookmarks.includes(f.id)) return false;
+    return true;
+  });
+}
+
+function matchCardHTML(f) {
+  const d = new Date(f.start);
+  const isFav = favorites.includes(f.home) || favorites.includes(f.away);
+  const isBookmarked = bookmarks.includes(f.id);
+  const homeT = teamByCode[f.home], awayT = teamByCode[f.away];
+  const scoreHTML = f.finished
+    ? `<div class="score">${f.result.home}<span class="sep">-</span>${f.result.away}</div>`
+    : `<div class="vs-label">VS</div>`;
+  const statusHTML = f.finished ? `<div class="status">終了</div>` : `<div class="status upcoming">予定</div>`;
+  return `
+    <div class="match ${isFav ? 'fav-match' : ''}" data-id="${f.id}">
+      <button class="bookmark-btn ${isBookmarked ? 'on' : ''}" data-bookmark="${f.id}" aria-label="ブックマーク">
+        <svg viewBox="0 0 24 24" fill="${isBookmarked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.6"><path d="M6 3h12v18l-6-4.5L6 21V3z"/></svg>
+      </button>
+      <div class="match-row">
+        <div class="kickoff">
+          <div class="time">${fmtTime(d)}</div>
+          <div class="tzlabel">${tzLabelFor(d)}</div>
+          ${statusHTML}
+        </div>
+        <div class="teams">
+          <div class="side home">
+            ${watermarkImg(f.home, 'home')}
+            ${crestImg(f.home, 32)}
+            <div class="side-label">
+              <span class="team-name">${homeT.name}</span>
+              <span class="ha-tag">Home</span>
+            </div>
+          </div>
+          ${scoreHTML}
+          <div class="side away">
+            ${watermarkImg(f.away, 'away')}
+            ${crestImg(f.away, 32)}
+            <div class="side-label">
+              <span class="team-name">${awayT.name}</span>
+              <span class="ha-tag">Away</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      ${(!f.finished && f.prob) ? `
+      <div class="odds-line">
+        <div class="odds-bar">
+          <div class="home" style="width:${f.prob.home}%"></div>
+          <div class="draw" style="width:${f.prob.draw}%"></div>
+          <div class="away" style="width:${f.prob.away}%"></div>
+        </div>
+        <span class="odds-pct">${f.prob.home}/${f.prob.draw}/${f.prob.away}%</span>
+      </div>` : ''}
+    </div>
+  `;
+}
+
+function groupByDay(list) {
+  const groups = {};
+  list.forEach(f => {
+    const d = new Date(f.start);
+    const key = fmtDayKey(d);
+    if (!groups[key]) groups[key] = { label: fmtDayLabel(d), mw: f.mw, items: [] };
+    groups[key].items.push(f);
+  });
+  return groups;
+}
+
+function renderList() {
+  const el = document.getElementById('listView');
+  const filtered = applyFilters(fixtures).sort((a, b) => new Date(a.start) - new Date(b.start));
+  if (filtered.length === 0) {
+    el.innerHTML = '<p style="color:var(--chalk-dim);font-size:14px;">該当する試合が見つかりません。</p>';
+    return;
+  }
+  const groups = groupByDay(filtered);
+  const keys = Object.keys(groups).sort();
+  el.innerHTML = keys.map(k => {
+    const g = groups[k];
+    return `
+      <div class="day-group">
+        <p class="day-heading">${g.label} <span class="mw">第${g.mw}節</span></p>
+        ${g.items.map(matchCardHTML).join('')}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderCalendar() {
+  const el = document.getElementById('calendarView');
+  const baseMonth = new Date(SEASON_START);
+  const monthDate = new Date(Date.UTC(baseMonth.getUTCFullYear(), baseMonth.getUTCMonth() + state.calMonthOffset, 1));
+  const y = monthDate.getUTCFullYear(), m = monthDate.getUTCMonth();
+  const monthLabel = new Intl.DateTimeFormat('ja-JP', { year: 'numeric', month: 'long', timeZone: 'UTC' }).format(monthDate);
+
+  const filtered = applyFilters(fixtures);
+  const byDate = {};
+  filtered.forEach(f => {
+    const d = new Date(f.start);
+    const key = fmtDayKey(d);
+    if (!byDate[key]) byDate[key] = [];
+    byDate[key].push(f);
+  });
+
+  const firstDow = new Date(Date.UTC(y, m, 1)).getUTCDay();
+  const daysInMonth = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  const dowNames = ['日', '月', '火', '水', '木', '金', '土'];
+
+  let cells = '';
+  for (let i = 0; i < firstDow; i++) cells += `<div class="cal-cell empty"></div>`;
+  for (let day = 1; day <= daysInMonth; day++) {
+    const cellDate = new Date(Date.UTC(y, m, day, 12));
+    const key = fmtDayKey(cellDate);
+    const matches = byDate[key] || [];
+    const selected = state.calSelectedDay === key;
+    cells += `
+      <div class="cal-cell ${matches.length ? 'has-match' : ''} ${selected ? 'selected' : ''}" data-day="${matches.length ? key : ''}">
+        <span class="date-num">${day}</span>
+        <div class="cal-dot-row">${matches.slice(0, 6).map(() => `<span class="cal-dot"></span>`).join('')}</div>
+      </div>
+    `;
+  }
+
+  let selectedHTML = '';
+  if (state.calSelectedDay && byDate[state.calSelectedDay]) {
+    const items = byDate[state.calSelectedDay].sort((a, b) => new Date(a.start) - new Date(b.start));
+    selectedHTML = `
+      <p class="cal-selected-heading">${fmtDayLabel(new Date(items[0].start))}</p>
+      ${items.map(matchCardHTML).join('')}
+    `;
+  }
+
+  el.innerHTML = `
+    <div class="cal-nav">
+      <button id="calPrev">‹</button>
+      <span class="cal-month">${monthLabel}</span>
+      <button id="calNext">›</button>
+    </div>
+    <div class="cal-grid">
+      ${dowNames.map(d => `<div class="cal-dow">${d}</div>`).join('')}
+      ${cells}
+    </div>
+    ${selectedHTML}
+  `;
+
+  document.getElementById('calPrev').onclick = () => { state.calMonthOffset--; renderCalendar(); };
+  document.getElementById('calNext').onclick = () => { state.calMonthOffset++; renderCalendar(); };
+  el.querySelectorAll('.cal-cell.has-match').forEach(cell => {
+    cell.onclick = () => { state.calSelectedDay = cell.dataset.day; renderCalendar(); };
+  });
+  bindCardEvents(el);
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+function toICSDate(d) {
+  return d.getUTCFullYear() + pad2(d.getUTCMonth() + 1) + pad2(d.getUTCDate()) + 'T' + pad2(d.getUTCHours()) + pad2(d.getUTCMinutes()) + pad2(d.getUTCSeconds()) + 'Z';
+}
+function buildCalendarLinks(f) {
+  const homeT = teamByCode[f.home], awayT = teamByCode[f.away];
+  const start = new Date(f.start);
+  const end = new Date(start.getTime() + 2 * 3600000);
+  const title = `${homeT.name} vs ${awayT.name}`;
+  const details = `プレミアリーグ 第${f.mw}節\n${homeT.name} (Home) vs ${awayT.name} (Away)`;
+  const location = 'Premier League';
+  const gcalUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+    + '&text=' + encodeURIComponent(title)
+    + '&dates=' + toICSDate(start) + '/' + toICSDate(end)
+    + '&details=' + encodeURIComponent(details)
+    + '&location=' + encodeURIComponent(location);
+  const icsContent = [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//PL Matchday Calendar//JP', 'CALSCALE:GREGORIAN', 'BEGIN:VEVENT',
+    'UID:' + f.id + '@pl-matchday-calendar',
+    'DTSTAMP:' + toICSDate(new Date()),
+    'DTSTART:' + toICSDate(start),
+    'DTEND:' + toICSDate(end),
+    'SUMMARY:' + title,
+    'DESCRIPTION:' + details.replace(/\n/g, '\\n'),
+    'LOCATION:' + location,
+    'END:VEVENT', 'END:VCALENDAR'
+  ].join('\r\n');
+  return { gcalUrl, icsContent };
+}
+function downloadICS(f) {
+  const { icsContent } = buildCalendarLinks(f);
+  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${f.home}-vs-${f.away}-mw${f.mw}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function statRow(label, home, away, maxVal) {
+  const hPct = Math.round((home / maxVal) * 100);
+  const aPct = 100 - hPct;
+  return `
+    <div class="stat-label">${label}</div>
+    <div class="stat-row">
+      <span class="num home-num">${home}</span>
+      <div class="stat-track"><div class="h" style="width:${hPct}%"></div><div class="a" style="width:${aPct}%"></div></div>
+      <span class="num">${away}</span>
+    </div>
+  `;
+}
+function scorerColHTML(list) {
+  if (!list.length) return `<p style="color:var(--ink-soft);font-size:12px;">得点なし</p>`;
+  return list.map(s => `<div class="scorer-item"><span>${s.player}${s.assist ? ` <span style="color:var(--ink-soft)">(A: ${s.assist})</span>` : ''}</span><span class="mins">${s.minute}'</span></div>`).join('');
+}
+function openModal(f) {
+  const homeT = teamByCode[f.home], awayT = teamByCode[f.away];
+  const { gcalUrl } = buildCalendarLinks(f);
+
+  const scoreBlock = f.finished
+    ? `<div class="modal-score">${f.result.home} - ${f.result.away}</div>`
+    : `<div class="modal-score" style="font-size:22px;color:var(--ink-soft);">${fmtTime(new Date(f.start))} ${tzLabelFor(new Date(f.start))}</div>`;
+
+  let bodyHTML = '';
+  if (f.finished) {
+    const r = f.result;
+    const hasStats = !!(r && r.possession);
+    const hasScorers = !!(r && (r.scorers.home.length || r.scorers.away.length));
+    const hasLineups = !!(r && r.lineups.home.length && r.lineups.away.length);
+
+    let statsHTML = '';
+    if (hasStats) {
+      const maxShots = Math.max(r.shots.home, r.shots.away, 1);
+      const maxCorners = Math.max(r.corners.home, r.corners.away, 1);
+      const maxOnTarget = Math.max(r.onTarget.home, r.onTarget.away, 1);
+      const maxFouls = Math.max(r.fouls.home, r.fouls.away, 1);
+      statsHTML = `
+        <p class="section-title">スタッツ</p>
+        ${statRow('ボール支配率 (%)', r.possession.home, r.possession.away, 100)}
+        ${statRow('シュート', r.shots.home, r.shots.away, maxShots)}
+        ${statRow('枠内シュート', r.onTarget.home, r.onTarget.away, maxOnTarget)}
+        ${statRow('コーナーキック', r.corners.home, r.corners.away, maxCorners)}
+        ${statRow('ファウル', r.fouls.home, r.fouls.away, maxFouls)}
+      `;
+    } else {
+      statsHTML = `<p class="section-title">スタッツ</p><p class="modal-sub" style="margin-top:-4px;">この試合ソースでは詳細スタッツを取得できませんでした（APIプランの制限など）。</p>`;
+    }
+
+    bodyHTML = `
+      ${hasScorers ? `
+      <p class="section-title">得点者</p>
+      <div class="scorers-cols">
+        <div>${scorerColHTML(r.scorers.home)}</div>
+        <div>${scorerColHTML(r.scorers.away)}</div>
+      </div>` : ''}
+
+      ${statsHTML}
+
+      ${hasLineups ? `
+      <p class="section-title">スターティングメンバー</p>
+      <div class="lineup-cols">
+        <ul class="lineup-list">${r.lineups.home.map(p => `<li><span>${p}</span></li>`).join('')}</ul>
+        <ul class="lineup-list">${r.lineups.away.map(p => `<li><span>${p}</span></li>`).join('')}</ul>
+      </div>` : ''}
+    `;
+  } else {
+    bodyHTML = f.prob ? `
+      <p class="section-title">勝敗予想</p>
+      ${statRow('勝敗予想 (%)', f.prob.home, f.prob.away, f.prob.home + f.prob.away)}
+      <p class="modal-sub" style="margin-top:-4px;">引き分け予想: ${f.prob.draw}%</p>
+    ` : `<p class="modal-sub" style="margin-top:6px;">この試合はまだ開催されていません。カレンダーに追加してキックオフをお見逃しなく。</p>`;
+  }
+
+  document.getElementById('modalContent').innerHTML = `
+    <button class="modal-close" id="modalCloseBtn" aria-label="閉じる">&times;</button>
+    <div class="modal-head">
+      <p class="modal-mw">第${f.mw}節 · ${fmtDayLabel(new Date(f.start))}</p>
+      <div class="modal-teams">
+        <div class="modal-team">
+          ${crestImg(f.home, 52, 'modal-crest')}
+          <span class="modal-team-name">${homeT.name}</span>
+        </div>
+        ${scoreBlock}
+        <div class="modal-team">
+          ${crestImg(f.away, 52, 'modal-crest')}
+          <span class="modal-team-name">${awayT.name}</span>
+        </div>
+      </div>
+      <p class="modal-sub">Home: ${homeT.name} / Away: ${awayT.name}</p>
+      <div class="cal-actions">
+        <a class="cal-btn" href="${gcalUrl}" target="_blank" rel="noopener">Googleカレンダーに追加</a>
+        <button class="cal-btn outline" id="icsBtn">ICSファイルを保存</button>
+      </div>
+    </div>
+    ${bodyHTML}
+  `;
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('modalCloseBtn').onclick = closeModal;
+  document.getElementById('icsBtn').onclick = () => downloadICS(f);
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target.id === 'modalOverlay') closeModal();
+});
+
+function bindCardEvents(root) {
+  root.querySelectorAll('.match').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.closest('.bookmark-btn')) return;
+      const f = fixtures.find(x => x.id === card.dataset.id);
+      if (f) openModal(f);
+    });
+  });
+  root.querySelectorAll('[data-bookmark]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = btn.dataset.bookmark;
+      if (bookmarks.includes(id)) bookmarks = bookmarks.filter(x => x !== id);
+      else bookmarks.push(id);
+      saveBookmarks();
+      renderAll();
+    });
+  });
+}
+
+function renderAll() {
+  if (state.view === 'list') {
+    document.getElementById('listView').style.display = '';
+    document.getElementById('calendarView').style.display = 'none';
+    renderList();
+    bindCardEvents(document.getElementById('listView'));
+  } else {
+    document.getElementById('listView').style.display = 'none';
+    document.getElementById('calendarView').style.display = '';
+    renderCalendar();
+  }
+}
+
+const teamFilter = document.getElementById('teamFilter');
+teamFilter.innerHTML = `<option value="">すべてのチーム</option>` + TEAMS.map(t => `<option value="${t.code}">${t.name}</option>`).join('');
+teamFilter.onchange = () => { state.team = teamFilter.value; renderAll(); };
+
+const mwFilter = document.getElementById('mwFilter');
+mwFilter.innerHTML = `<option value="">全38節</option>` + Array.from({ length: 38 }, (_, i) => `<option value="${i + 1}">第${i + 1}節</option>`).join('');
+mwFilter.onchange = () => { state.mw = mwFilter.value; renderAll(); };
+
+const favToggleBtn = document.getElementById('favToggleBtn');
+const favPanel = document.getElementById('favPanel');
+favToggleBtn.onclick = () => favPanel.classList.toggle('open');
+document.addEventListener('click', e => {
+  if (!e.target.closest('.fav-wrap')) favPanel.classList.remove('open');
+});
+function renderFavList() {
+  document.getElementById('favList').innerHTML = TEAMS.map(t => `
+    <label class="fav-row">
+      <input type="checkbox" value="${t.code}" ${favorites.includes(t.code) ? 'checked' : ''}>
+      ${t.name}
+    </label>
+  `).join('');
+  document.querySelectorAll('#favList input').forEach(cb => {
+    cb.onchange = () => {
+      if (cb.checked) favorites.push(cb.value);
+      else favorites = favorites.filter(c => c !== cb.value);
+      saveFavorites();
+      renderAll();
+    };
+  });
+}
+renderFavList();
+
+const favOnlyBtn = document.getElementById('favOnlyBtn');
+favOnlyBtn.onclick = () => { state.favOnly = !state.favOnly; favOnlyBtn.classList.toggle('active', state.favOnly); renderAll(); };
+
+const bookmarkOnlyBtn = document.getElementById('bookmarkOnlyBtn');
+bookmarkOnlyBtn.onclick = () => { state.bookmarkOnly = !state.bookmarkOnly; bookmarkOnlyBtn.classList.toggle('active', state.bookmarkOnly); renderAll(); };
+
+document.getElementById('tzToggle').querySelectorAll('button').forEach(btn => {
+  btn.onclick = () => {
+    state.tz = btn.dataset.tz;
+    document.querySelectorAll('#tzToggle button').forEach(b => b.classList.toggle('active', b === btn));
+    renderAll();
+  };
+});
+
+document.getElementById('viewToggle').querySelectorAll('button').forEach(btn => {
+  btn.onclick = () => {
+    state.view = btn.dataset.view;
+    document.querySelectorAll('#viewToggle button').forEach(b => b.classList.toggle('active', b === btn));
+    renderAll();
+  };
+});
+
+renderAll();
+initFixtures();
+</script>
+</body>
+</html>
