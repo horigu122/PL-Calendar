@@ -502,14 +502,17 @@ function mapApiMatch(m) {
 let lastFetchError = null;
 
 async function fetchFixturesFromAPI() {
-  if (!API_KEY || API_KEY === "YOUR_API_KEY") {
+  // プロキシ経由の場合、キーはWorker側に保持されているため、
+  // フロント側の API_KEY が未設定（プレースホルダのまま）でも動作させる。
+  if (!PROXY_BASE_URL && (!API_KEY || API_KEY === "YOUR_API_KEY")) {
     lastFetchError = 'no-key';
     return null;
   }
   try {
-    const res = await fetch(apiUrl(`/competitions/${COMPETITION_CODE}/matches?season=${SEASON_YEAR}`), {
-      headers: { 'X-Auth-Token': API_KEY }
-    });
+    // プロキシ経由のときはキーをWorker側が保持しているため、クライアントからは
+    // カスタムヘッダーを送らない（送るとCORSプリフライトでブロックされる原因になる）。
+    const fetchOptions = PROXY_BASE_URL ? {} : { headers: { 'X-Auth-Token': API_KEY } };
+    const res = await fetch(apiUrl(`/competitions/${COMPETITION_CODE}/matches?season=${SEASON_YEAR}`), fetchOptions);
     if (res.status === 403) { lastFetchError = 'auth: APIキーが無効、または未登録です（403）。'; return null; }
     if (res.status === 429) { lastFetchError = 'rate-limit: リクエスト回数の上限に達しました（429）。少し時間を置いて再読み込みしてください。'; return null; }
     if (!res.ok) { lastFetchError = `http-${res.status}: APIが ${res.status} を返しました。`; return null; }
