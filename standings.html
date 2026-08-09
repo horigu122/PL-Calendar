@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premier League — Standings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pitch-dark: #0c2e22;
+    --pitch: #0f3d2c;
+    --pitch-light: #145038;
+    --chalk: #f3efe2;
+    --chalk-dim: #ded8c4;
+    --ink: #12211a;
+    --ink-soft: #4d5a4f;
+    --gold: #d9a441;
+    --gold-deep: #a97a24;
+    --line: rgba(243,239,226,0.16);
+    --card: #fbf9f2;
+    --card-line: rgba(18,33,26,0.1);
+    --loss: #ad4a42;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--pitch-dark); font-family: 'Inter', sans-serif; color: var(--chalk); }
+  body {
+    background-image:
+      repeating-linear-gradient(90deg, var(--pitch-light) 0px, var(--pitch-light) 1px, transparent 1px, transparent 90px),
+      linear-gradient(180deg, var(--pitch) 0%, var(--pitch-dark) 100%);
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 24px 22px 80px; }
+  button { font-family: inherit; }
+
+  /* ---- sticky header (index.htmlと共通デザイン) ---- */
+  .site-header {
+    position: sticky; top: 0; z-index: 200;
+    background: var(--pitch-dark);
+    border-bottom: 1px solid var(--line);
+    transition: box-shadow 0.2s ease, background 0.2s ease;
+  }
+  .site-header.is-scrolled { box-shadow: 0 6px 18px rgba(0,0,0,0.35); background: rgba(12,46,34,0.96); backdrop-filter: blur(6px); }
+  .site-header-inner {
+    max-width: 900px; margin: 0 auto; padding: 12px 22px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .brand {
+    font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 600; letter-spacing: 0.04em;
+    color: var(--chalk); display: flex; align-items: center; gap: 8px; white-space: nowrap;
+  }
+  .brand .brand-mark { color: var(--gold); }
+  .site-nav { display: flex; gap: 6px; flex-wrap: wrap; }
+  .nav-link {
+    font-family: 'Oswald', sans-serif; font-size: 13px; letter-spacing: 0.03em;
+    color: var(--chalk-dim); text-decoration: none; padding: 7px 14px; border-radius: 999px;
+    border: 1px solid transparent; transition: all 0.15s ease;
+  }
+  .nav-link:hover { color: var(--gold); }
+  .nav-link.active { background: var(--gold); color: var(--ink); font-weight: 600; }
+
+  @media (max-width: 460px) {
+    .site-header-inner { padding: 10px 14px; gap: 10px; }
+    .brand { font-size: 14px; }
+    .nav-link { font-size: 12px; padding: 6px 11px; }
+  }
+
+  .kicker { font-family: 'Oswald', sans-serif; font-size: 13px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--gold); margin: 0 0 6px; }
+  h1 { font-family: 'Anton', sans-serif; font-weight: 400; font-size: clamp(38px, 7vw, 64px); line-height: 0.95; letter-spacing: 0.01em; margin: 0 0 4px; text-transform: uppercase; }
+  h1 span { color: var(--gold); }
+  .sub { font-size: 14px; color: var(--chalk-dim); margin: 0 0 8px; max-width: 560px; line-height: 1.6; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 18px 0 20px; font-size: 12px; color: var(--chalk-dim); }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 3px; }
+  .legend-swatch.ucl { background: var(--gold); }
+  .legend-swatch.rel { background: var(--loss); }
+
+  .table-wrap { background: var(--card); color: var(--ink); border-radius: 14px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    font-family: 'Oswald', sans-serif; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--ink-soft); text-align: center; padding: 12px 6px; border-bottom: 1px solid var(--card-line);
+    background: rgba(18,33,26,0.03);
+  }
+  thead th.col-club { text-align: left; padding-left: 16px; }
+  tbody td { padding: 10px 6px; text-align: center; border-bottom: 1px solid var(--card-line); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr { position: relative; }
+  tbody tr.zone-ucl td:first-child::before,
+  tbody tr.zone-rel td:first-child::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  }
+  tbody tr.zone-ucl td:first-child::before { background: var(--gold); }
+  tbody tr.zone-rel td:first-child::before { background: var(--loss); }
+
+  .pos-cell { font-family: 'Oswald', sans-serif; font-weight: 600; }
+  .club-cell { text-align: left !important; padding-left: 16px !important; }
+  .club-inner { display: flex; align-items: center; gap: 10px; }
+  .club-crest { width: 24px; height: 24px; object-fit: contain; flex-shrink: 0; border-radius: 6px; background: rgba(18,33,26,0.04); }
+  .club-name { font-weight: 600; font-size: 13px; white-space: nowrap; }
+  .pts-cell { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 14px; }
+  .gd-cell.pos { color: #2e7d46; }
+  .gd-cell.neg { color: var(--loss); }
+
+  .footnote { margin-top: 24px; font-size: 12px; color: var(--chalk-dim); line-height: 1.7; border-top: 1px dashed var(--line); padding-top: 16px; }
+
+  @media (max-width: 620px) {
+    table { font-size: 11.5px; }
+    .club-name { max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
+    thead th, tbody td { padding: 8px 4px; }
+    .club-crest { width: 20px; height: 20px; }
+    .legend { font-size: 11px; gap: 12px; }
+    /* 試合数以外の細かい列をスマホでは間引いて見やすくする */
+    th.col-form, .col-form-cell { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="site-header" id="siteHeader">
+  <div class="site-header-inner">
+    <span class="brand">⚽ <span class="brand-mark">PL</span> Calendar</span>
+    <nav class="site-nav">
+      <a href="index.html" class="nav-link">カレンダー</a>
+      <a href="standings.html" class="nav-link active">順位表</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <p class="kicker">2026-27 season</p>
+  <h1>League<br><span>Standings</span></h1>
+  <p class="sub">プレミアリーグ 2026-27シーズンの最新順位表です。</p>
+  <p class="sub" id="dataSourceNote" style="margin-top:-6px;font-size:12px;">📡 データ確認中…</p>
+
+  <div class="legend">
+    <span class="legend-item"><span class="legend-swatch ucl"></span>チャンピオンズリーグ圏内（1〜4位）</span>
+    <span class="legend-item"><span class="legend-swatch rel"></span>降格圏（18〜20位）</span>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:34px;">#</th>
+          <th class="col-club">クラブ</th>
+          <th title="試合数">P</th>
+          <th title="勝利">W</th>
+          <th title="引き分け">D</th>
+          <th title="敗戦">L</th>
+          <th title="得点">GF</th>
+          <th title="失点">GA</th>
+          <th title="得失点差">GD</th>
+          <th title="勝ち点">Pts</th>
+        </tr>
+      </thead>
+      <tbody id="standingsBody">
+        <tr><td colspan="10" style="padding:24px;color:var(--ink-soft);">読み込み中…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="footnote">
+    APIキー／プロキシが未設定、またはデータ取得に失敗した場合はサンプル（ダミー）の順位表を表示します。<br>
+    本番データの取得設定は <code>shared.js</code> 内の <code>API_KEY</code> / <code>PROXY_BASE_URL</code> で管理しています（index.htmlと共通）。
+  </p>
+</div>
+
+<script src="shared.js"></script>
+<script>
+function seededRandLocal(seed) {
+  let x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+// APIやローカル画像が無い状態でもページとして成立するよう、ダミーの順位表を生成する
+function generateDummyStandings() {
+  const rows = TEAMS.map((t, idx) => {
+    const seed = idx * 53 + 7;
+    const played = 6;
+    let won = Math.floor(seededRandLocal(seed) * 5);
+    let lost = Math.floor(seededRandLocal(seed + 1) * (6 - won));
+    let draw = Math.max(0, played - won - lost);
+    const gf = won * 2 + draw + Math.floor(seededRandLocal(seed + 2) * 6);
+    const ga = lost * 2 + Math.floor(seededRandLocal(seed + 3) * 5);
+    return {
+      code: t.code,
+      played, won, draw, lost,
+      gf, ga, gd: gf - ga,
+      pts: won * 3 + draw
+    };
+  });
+  rows.sort((a, b) => b.pts - a.pts || (b.gd - a.gd) || (b.gf - a.gf));
+  rows.forEach((r, i) => r.position = i + 1);
+  return rows;
+}
+
+async function fetchStandingsFromAPI() {
+  if (!hasApiAccess()) return null;
+  try {
+    const res = await fetch(apiUrl(`/competitions/${COMPETITION_CODE}/standings`), apiFetchOptions());
+    if (!res.ok) { console.warn('[Standings] APIエラー:', res.status); return null; }
+    const data = await res.json();
+    const total = (data.standings || []).find(s => s.type === 'TOTAL');
+    if (!total || !total.table || !total.table.length) return null;
+    return total.table.map(row => {
+      const code = TLA_TO_CODE[row.team.tla] || row.team.tla || row.team.shortName;
+      ensureTeamExists(code, row.team);
+      return {
+        position: row.position, code,
+        played: row.playedGames, won: row.won, draw: row.draw, lost: row.lost,
+        gf: row.goalsFor, ga: row.goalsAgainst, gd: row.goalDifference, pts: row.points
+      };
+    });
+  } catch (err) {
+    console.warn('[Standings] 取得失敗。ダミーデータを表示します。', err);
+    return null;
+  }
+}
+
+function renderStandings(rows) {
+  const tbody = document.getElementById('standingsBody');
+  tbody.innerHTML = rows.map(r => {
+    const t = teamByCode[r.code] || { name: r.code };
+    const zoneClass = r.position <= 4 ? 'zone-ucl' : (r.position >= 18 ? 'zone-rel' : '');
+    const gdClass = r.gd > 0 ? 'pos' : (r.gd < 0 ? 'neg' : '');
+    const gdText = r.gd > 0 ? `+${r.gd}` : `${r.gd}`;
+    return `
+      <tr class="${zoneClass}">
+        <td class="pos-cell">${r.position}</td>
+        <td class="club-cell">
+          <div class="club-inner">
+            ${crestImg(r.code, 24, 'club-crest')}
+            <span class="club-name">${t.name}</span>
+          </div>
+        </td>
+        <td>${r.played}</td>
+        <td>${r.won}</td>
+        <td>${r.draw}</td>
+        <td>${r.lost}</td>
+        <td>${r.gf}</td>
+        <td>${r.ga}</td>
+        <td class="gd-cell ${gdClass}">${gdText}</td>
+        <td class="pts-cell">${r.pts}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function initStandings() {
+  const note = document.getElementById('dataSourceNote');
+  const apiRows = await fetchStandingsFromAPI();
+  if (apiRows && apiRows.length) {
+    renderStandings(apiRows);
+    if (note) note.textContent = '📡 Football-Data.org からライブデータを取得中です。';
+  } else {
+    renderStandings(generateDummyStandings());
+    if (note) note.textContent = '🧪 サンプル（ダミー）の順位表を表示中です。';
+  }
+}
+initStandings();
+
+const siteHeader = document.getElementById('siteHeader');
+function updateHeaderShadow() {
+  siteHeader.classList.toggle('is-scrolled', window.scrollY > 4);
+}
+window.addEventListener('scroll', updateHeaderShadow, { passive: true });
+updateHeaderShadow();
+</script>
+</body>
+</html>
