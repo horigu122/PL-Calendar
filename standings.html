@@ -33,7 +33,7 @@
   .wrap { max-width: 900px; margin: 0 auto; padding: 24px 22px 80px; }
   button { font-family: inherit; }
 
-  /* ---- sticky header (index.htmlと共通デザイン) ---- */
+  /* ---- sticky header (shared.js の renderSiteHeader が生成) ---- */
   .site-header {
     position: sticky; top: 0; z-index: 200;
     background: var(--pitch-dark);
@@ -70,71 +70,83 @@
   h1 span { color: var(--gold); }
   .sub { font-size: 14px; color: var(--chalk-dim); margin: 0 0 8px; max-width: 560px; line-height: 1.6; }
 
-  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 18px 0 20px; font-size: 12px; color: var(--chalk-dim); }
+  .season-select {
+    appearance: none; background: var(--pitch-light); color: var(--chalk);
+    border: 1px solid var(--line); border-radius: 999px; padding: 8px 32px 8px 16px;
+    font-size: 13px; font-weight: 500; cursor: pointer; margin: 14px 0 6px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0L5 6L10 0' fill='none' stroke='%23f3efe2' stroke-width='1.4'/></svg>");
+    background-repeat: no-repeat; background-position: right 14px center;
+  }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 16px 0 20px; font-size: 12px; color: var(--chalk-dim); }
   .legend-item { display: flex; align-items: center; gap: 6px; }
-  .legend-swatch { width: 10px; height: 10px; border-radius: 3px; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
   .legend-swatch.ucl { background: var(--gold); }
+  .legend-swatch.el { background: #4f8ef7; }
+  .legend-swatch.uecl { background: #46b39a; }
   .legend-swatch.rel { background: var(--loss); }
 
-  .table-wrap { background: var(--card); color: var(--ink); border-radius: 14px; overflow: hidden; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .table-wrap { background: var(--card); color: var(--ink); border-radius: 14px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; min-width: 460px; border-collapse: collapse; font-size: 13px; }
   thead th {
     font-family: 'Oswald', sans-serif; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;
     color: var(--ink-soft); text-align: center; padding: 12px 6px; border-bottom: 1px solid var(--card-line);
-    background: rgba(18,33,26,0.03);
+    background: rgba(18,33,26,0.03); white-space: nowrap;
   }
   thead th.col-club { text-align: left; padding-left: 16px; }
   tbody td { padding: 10px 6px; text-align: center; border-bottom: 1px solid var(--card-line); }
   tbody tr:last-child td { border-bottom: none; }
   tbody tr { position: relative; }
   tbody tr.zone-ucl td:first-child::before,
+  tbody tr.zone-el td:first-child::before,
+  tbody tr.zone-uecl td:first-child::before,
   tbody tr.zone-rel td:first-child::before {
     content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
   }
   tbody tr.zone-ucl td:first-child::before { background: var(--gold); }
+  tbody tr.zone-el td:first-child::before { background: #4f8ef7; }
+  tbody tr.zone-uecl td:first-child::before { background: #46b39a; }
   tbody tr.zone-rel td:first-child::before { background: var(--loss); }
 
   .pos-cell { font-family: 'Oswald', sans-serif; font-weight: 600; }
   .club-cell { text-align: left !important; padding-left: 16px !important; }
   .club-inner { display: flex; align-items: center; gap: 10px; }
   .club-crest { width: 24px; height: 24px; object-fit: contain; flex-shrink: 0; border-radius: 6px; background: rgba(18,33,26,0.04); }
-  .club-name { font-weight: 600; font-size: 13px; white-space: nowrap; }
+  .club-name { font-weight: 600; font-size: 13px; white-space: nowrap; cursor: pointer; }
+  .club-name:hover { text-decoration: underline; text-decoration-color: var(--gold-deep); }
   .pts-cell { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 14px; }
   .gd-cell.pos { color: #2e7d46; }
   .gd-cell.neg { color: var(--loss); }
 
+  .legend-abbr { margin-top: 16px; font-size: 12px; color: var(--chalk-dim); line-height: 1.9; }
+  .legend-abbr b { color: var(--chalk); }
+
   .footnote { margin-top: 24px; font-size: 12px; color: var(--chalk-dim); line-height: 1.7; border-top: 1px dashed var(--line); padding-top: 16px; }
 
   @media (max-width: 620px) {
-    table { font-size: 11.5px; }
+    table { font-size: 11.5px; min-width: 420px; }
     .club-name { max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
     thead th, tbody td { padding: 8px 4px; }
     .club-crest { width: 20px; height: 20px; }
-    .legend { font-size: 11px; gap: 12px; }
-    /* 試合数以外の細かい列をスマホでは間引いて見やすくする */
-    th.col-form, .col-form-cell { display: none; }
+    .legend { font-size: 11px; gap: 10px; }
   }
 </style>
 </head>
 <body>
-<header class="site-header" id="siteHeader">
-  <div class="site-header-inner">
-    <span class="brand">⚽ <span class="brand-mark">PL</span> Calendar</span>
-    <nav class="site-nav">
-      <a href="index.html" class="nav-link">カレンダー</a>
-      <a href="standings.html" class="nav-link active">順位表</a>
-    </nav>
-  </div>
-</header>
+<div id="siteHeaderMount"></div>
 
 <div class="wrap">
   <p class="kicker">2026-27 season</p>
   <h1>League<br><span>Standings</span></h1>
-  <p class="sub">プレミアリーグ 2026-27シーズンの最新順位表です。</p>
+  <p class="sub">プレミアリーグの順位表です。</p>
   <p class="sub" id="dataSourceNote" style="margin-top:-6px;font-size:12px;">📡 データ確認中…</p>
 
+  <select class="season-select" id="seasonSelect"></select>
+
   <div class="legend">
-    <span class="legend-item"><span class="legend-swatch ucl"></span>チャンピオンズリーグ圏内（1〜4位）</span>
+    <span class="legend-item"><span class="legend-swatch ucl"></span>CL圏（1〜4位）</span>
+    <span class="legend-item"><span class="legend-swatch el"></span>EL圏（5位）</span>
+    <span class="legend-item"><span class="legend-swatch uecl"></span>UECL圏（6位）</span>
     <span class="legend-item"><span class="legend-swatch rel"></span>降格圏（18〜20位）</span>
   </div>
 
@@ -160,29 +172,38 @@
     </table>
   </div>
 
+  <p class="legend-abbr">
+    <b>P</b>=試合数　<b>W</b>=勝利　<b>D</b>=引き分け　<b>L</b>=敗戦　
+    <b>GF</b>=得点　<b>GA</b>=失点　<b>GD</b>=得失点差　<b>Pts</b>=勝ち点
+  </p>
+
   <p class="footnote">
     APIキー／プロキシが未設定、またはデータ取得に失敗した場合はサンプル（ダミー）の順位表を表示します。<br>
-    本番データの取得設定は <code>shared.js</code> 内の <code>API_KEY</code> / <code>PROXY_BASE_URL</code> で管理しています（index.htmlと共通）。
+    本番データの取得設定は <code>shared.js</code> 内の <code>API_KEY</code> / <code>PROXY_BASE_URL</code> で管理しています（index.htmlと共通）。<br>
+    ヨーロッパカップ戦の出場枠数はシーズンごとに変動する場合があります（国内カップ戦の結果等による）。ここでは一般的な区分（CL:1-4位 / EL:5位 / UECL:6位）で表示しています。
   </p>
 </div>
 
 <script src="shared.js"></script>
 <script>
+renderSiteHeader('standings');
+
 function seededRandLocal(seed) {
   let x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 }
 
 // APIやローカル画像が無い状態でもページとして成立するよう、ダミーの順位表を生成する
-function generateDummyStandings() {
+function generateDummyStandings(seasonYear) {
+  const isPastSeason = seasonYear < SEASON_YEAR;
   const rows = TEAMS.map((t, idx) => {
-    const seed = idx * 53 + 7;
-    const played = 6;
-    let won = Math.floor(seededRandLocal(seed) * 5);
-    let lost = Math.floor(seededRandLocal(seed + 1) * (6 - won));
+    const seed = idx * 53 + 7 + seasonYear * 3;
+    const played = isPastSeason ? 38 : 6;
+    let won = Math.floor(seededRandLocal(seed) * (played * 0.6));
+    let lost = Math.floor(seededRandLocal(seed + 1) * (played - won));
     let draw = Math.max(0, played - won - lost);
-    const gf = won * 2 + draw + Math.floor(seededRandLocal(seed + 2) * 6);
-    const ga = lost * 2 + Math.floor(seededRandLocal(seed + 3) * 5);
+    const gf = won * 2 + draw + Math.floor(seededRandLocal(seed + 2) * (played * 0.4));
+    const ga = lost * 2 + Math.floor(seededRandLocal(seed + 3) * (played * 0.35));
     return {
       code: t.code,
       played, won, draw, lost,
@@ -195,10 +216,10 @@ function generateDummyStandings() {
   return rows;
 }
 
-async function fetchStandingsFromAPI() {
+async function fetchStandingsFromAPI(seasonYear) {
   if (!hasApiAccess()) return null;
   try {
-    const res = await fetch(apiUrl(`/competitions/${COMPETITION_CODE}/standings`), apiFetchOptions());
+    const res = await fetch(apiUrl(`/competitions/${COMPETITION_CODE}/standings?season=${seasonYear}`), apiFetchOptions());
     if (!res.ok) { console.warn('[Standings] APIエラー:', res.status); return null; }
     const data = await res.json();
     const total = (data.standings || []).find(s => s.type === 'TOTAL');
@@ -218,11 +239,19 @@ async function fetchStandingsFromAPI() {
   }
 }
 
+function zoneClassFor(position) {
+  if (position <= 4) return 'zone-ucl';
+  if (position === 5) return 'zone-el';
+  if (position === 6) return 'zone-uecl';
+  if (position >= 18) return 'zone-rel';
+  return '';
+}
+
 function renderStandings(rows) {
   const tbody = document.getElementById('standingsBody');
   tbody.innerHTML = rows.map(r => {
     const t = teamByCode[r.code] || { name: r.code };
-    const zoneClass = r.position <= 4 ? 'zone-ucl' : (r.position >= 18 ? 'zone-rel' : '');
+    const zoneClass = zoneClassFor(r.position);
     const gdClass = r.gd > 0 ? 'pos' : (r.gd < 0 ? 'neg' : '');
     const gdText = r.gd > 0 ? `+${r.gd}` : `${r.gd}`;
     return `
@@ -231,7 +260,7 @@ function renderStandings(rows) {
         <td class="club-cell">
           <div class="club-inner">
             ${crestImg(r.code, 24, 'club-crest')}
-            <span class="club-name">${t.name}</span>
+            <span class="club-name" data-code="${r.code}">${t.name}</span>
           </div>
         </td>
         <td>${r.played}</td>
@@ -247,25 +276,49 @@ function renderStandings(rows) {
   }).join('');
 }
 
-async function initStandings() {
+const seasonSelect = document.getElementById('seasonSelect');
+seasonSelect.innerHTML = AVAILABLE_SEASONS.map(s => `<option value="${s.value}">${s.label}</option>`).join('');
+seasonSelect.value = String(SEASON_YEAR);
+
+async function loadStandingsFor(seasonYear) {
   const note = document.getElementById('dataSourceNote');
-  const apiRows = await fetchStandingsFromAPI();
+  document.getElementById('standingsBody').innerHTML = '<tr><td colspan="10" style="padding:24px;color:var(--ink-soft);">読み込み中…</td></tr>';
+  const apiRows = await fetchStandingsFromAPI(seasonYear);
   if (apiRows && apiRows.length) {
     renderStandings(apiRows);
     if (note) note.textContent = '📡 Football-Data.org からライブデータを取得中です。';
   } else {
-    renderStandings(generateDummyStandings());
+    renderStandings(generateDummyStandings(seasonYear));
     if (note) note.textContent = '🧪 サンプル（ダミー）の順位表を表示中です。';
   }
 }
-initStandings();
+seasonSelect.addEventListener('change', () => loadStandingsFor(Number(seasonSelect.value)));
 
-const siteHeader = document.getElementById('siteHeader');
-function updateHeaderShadow() {
-  siteHeader.classList.toggle('is-scrolled', window.scrollY > 4);
-}
-window.addEventListener('scroll', updateHeaderShadow, { passive: true });
-updateHeaderShadow();
+// クラブ名クリックで簡易ミニカード（フォーム=勝敗の目安）を表示
+const miniModal = document.createElement('div');
+miniModal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(6,18,13,0.72);z-index:300;align-items:center;justify-content:center;padding:20px;';
+miniModal.innerHTML = `<div id="miniModalCard" style="background:var(--card);color:var(--ink);border-radius:16px;padding:22px;max-width:320px;width:100%;text-align:center;"></div>`;
+document.body.appendChild(miniModal);
+miniModal.addEventListener('click', (e) => { if (e.target === miniModal) miniModal.style.display = 'none'; });
+
+document.getElementById('standingsBody').addEventListener('click', (e) => {
+  const nameEl = e.target.closest('.club-name');
+  if (!nameEl) return;
+  const code = nameEl.dataset.code;
+  const t = teamByCode[code];
+  if (!t) return;
+  document.getElementById('miniModalCard').innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+      ${crestImg(code, 56)}
+      <div style="font-family:'Oswald',sans-serif;font-weight:600;">${t.name}</div>
+      <div style="font-size:12px;color:var(--ink-soft);">${t.venue || ''}</div>
+      <a href="index.html" style="margin-top:6px;font-family:'Oswald',sans-serif;font-size:12px;color:var(--gold-deep);text-decoration:none;">試合日程で${t.name}の試合を見る →</a>
+    </div>
+  `;
+  miniModal.style.display = 'flex';
+});
+
+loadStandingsFor(SEASON_YEAR);
 </script>
 </body>
 </html>

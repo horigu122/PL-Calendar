@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premier League — Top Scorers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pitch-dark: #0c2e22; --pitch: #0f3d2c; --pitch-light: #145038;
+    --chalk: #f3efe2; --chalk-dim: #ded8c4; --ink: #12211a; --ink-soft: #4d5a4f;
+    --gold: #d9a441; --gold-deep: #a97a24; --line: rgba(243,239,226,0.16);
+    --card: #fbf9f2; --card-line: rgba(18,33,26,0.1); --loss: #ad4a42;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--pitch-dark); font-family: 'Inter', sans-serif; color: var(--chalk); }
+  body {
+    background-image:
+      repeating-linear-gradient(90deg, var(--pitch-light) 0px, var(--pitch-light) 1px, transparent 1px, transparent 90px),
+      linear-gradient(180deg, var(--pitch) 0%, var(--pitch-dark) 100%);
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 22px 80px; }
+  button { font-family: inherit; }
+
+  .site-header { position: sticky; top: 0; z-index: 200; background: var(--pitch-dark); border-bottom: 1px solid var(--line); transition: box-shadow 0.2s ease, background 0.2s ease; }
+  .site-header.is-scrolled { box-shadow: 0 6px 18px rgba(0,0,0,0.35); background: rgba(12,46,34,0.96); backdrop-filter: blur(6px); }
+  .site-header-inner { max-width: 760px; margin: 0 auto; padding: 12px 22px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .brand { font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 600; letter-spacing: 0.04em; color: var(--chalk); display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .brand .brand-mark { color: var(--gold); }
+  .site-nav { display: flex; gap: 6px; flex-wrap: wrap; }
+  .nav-link { font-family: 'Oswald', sans-serif; font-size: 13px; letter-spacing: 0.03em; color: var(--chalk-dim); text-decoration: none; padding: 7px 14px; border-radius: 999px; border: 1px solid transparent; transition: all 0.15s ease; }
+  .nav-link:hover { color: var(--gold); }
+  .nav-link.active { background: var(--gold); color: var(--ink); font-weight: 600; }
+  @media (max-width: 460px) { .site-header-inner { padding: 10px 14px; gap: 10px; } .brand { font-size: 14px; } .nav-link { font-size: 12px; padding: 6px 11px; } }
+
+  .kicker { font-family: 'Oswald', sans-serif; font-size: 13px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--gold); margin: 0 0 6px; }
+  h1 { font-family: 'Anton', sans-serif; font-weight: 400; font-size: clamp(34px, 6vw, 56px); line-height: 0.95; letter-spacing: 0.01em; margin: 0 0 4px; text-transform: uppercase; }
+  h1 span { color: var(--gold); }
+  .sub { font-size: 14px; color: var(--chalk-dim); margin: 0 0 8px; max-width: 560px; line-height: 1.6; }
+
+  .tabs { display: flex; gap: 8px; margin: 18px 0 18px; }
+  .tab-btn {
+    font-family: 'Oswald', sans-serif; font-size: 13px; letter-spacing: 0.03em;
+    background: transparent; border: 1px solid var(--line); color: var(--chalk-dim);
+    border-radius: 999px; padding: 8px 16px; cursor: pointer;
+  }
+  .tab-btn.active { background: var(--gold); border-color: var(--gold); color: var(--ink); font-weight: 600; }
+
+  .rank-list { background: var(--card); color: var(--ink); border-radius: 14px; overflow: hidden; }
+  .rank-row {
+    display: grid; grid-template-columns: 40px 34px 1fr auto; align-items: center; gap: 12px;
+    padding: 12px 16px; border-bottom: 1px solid var(--card-line);
+  }
+  .rank-row:last-child { border-bottom: none; }
+  .rank-num { font-family: 'Anton', sans-serif; font-size: 18px; color: var(--ink-soft); text-align: center; }
+  .rank-row:nth-child(1) .rank-num { color: var(--gold-deep); }
+  .rank-crest { width: 30px; height: 30px; object-fit: contain; border-radius: 7px; background: rgba(18,33,26,0.04); }
+  .rank-info { min-width: 0; }
+  .rank-player { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rank-club { font-size: 11.5px; color: var(--ink-soft); }
+  .rank-value { font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 600; color: var(--gold-deep); }
+
+  .footnote { margin-top: 24px; font-size: 12px; color: var(--chalk-dim); line-height: 1.7; border-top: 1px dashed var(--line); padding-top: 16px; }
+
+  @media (max-width: 480px) {
+    .rank-row { grid-template-columns: 30px 26px 1fr auto; padding: 10px 12px; gap: 8px; }
+    .rank-player { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div id="siteHeaderMount"></div>
+
+<div class="wrap">
+  <p class="kicker">2026-27 season</p>
+  <h1>Top <span>Scorers</span></h1>
+  <p class="sub">プレミアリーグ 2026-27シーズンの個人成績ランキングです。</p>
+  <p class="sub" id="dataSourceNote" style="margin-top:-6px;font-size:12px;">📡 データ確認中…</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="goals">得点ランキング</button>
+    <button class="tab-btn" data-tab="assists">アシストランキング</button>
+  </div>
+
+  <div class="rank-list" id="rankList"></div>
+
+  <p class="footnote">
+    Football-Data.org 無料プランの得点者エンドポイントには、選手ごとの通算アシスト数が含まれない場合があります。その場合はダミー値で代用して表示しています（オフシーズン等でAPIレスポンスが空の場合も同様にサンプルデータへ自動フォールバックします）。
+  </p>
+</div>
+
+<script src="shared.js"></script>
+<script>
+renderSiteHeader('scorers');
+
+function seededRandLocal(seed) {
+  let x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+const DUMMY_FIRST = ["Kai", "Bruno", "Erling", "Mohamed", "Cole", "Declan", "Martin", "Bukayo", "Ollie", "Dominic", "James", "Phil", "Rodrigo", "Alexander", "Jarrod", "Anthony", "Morgan", "Evan", "Julian", "Nicolas"];
+const DUMMY_LAST = ["Havertz", "Fernandes", "Haaland", "Salah", "Palmer", "Rice", "Odegaard", "Saka", "Watkins", "Solanke", "Maddison", "Foden", "Muniz", "Isak", "Bowen", "Gordon", "Rogers", "Ferguson", "Alvarez", "Jackson"];
+
+function generateDummyScorers() {
+  return TEAMS.slice(0, 20).map((t, idx) => {
+    const seed = idx * 41 + 11;
+    return {
+      name: `${DUMMY_FIRST[idx % DUMMY_FIRST.length]} ${DUMMY_LAST[idx % DUMMY_LAST.length]}`,
+      code: t.code,
+      goals: Math.floor(2 + seededRandLocal(seed) * 10),
+      assists: Math.floor(seededRandLocal(seed + 1) * 7)
+    };
+  }).sort((a, b) => b.goals - a.goals);
+}
+
+async function fetchScorersFromAPI() {
+  if (!hasApiAccess()) return null;
+  try {
+    const res = await fetch(apiUrl(`/competitions/${COMPETITION_CODE}/scorers?limit=20`), apiFetchOptions());
+    if (!res.ok) { console.warn('[Scorers] APIエラー:', res.status); return null; }
+    const data = await res.json();
+    if (!data.scorers || !data.scorers.length) return null;
+    return data.scorers.map(s => {
+      const code = TLA_TO_CODE[s.team.tla] || s.team.tla || s.team.shortName;
+      ensureTeamExists(code, s.team);
+      return {
+        name: s.player.name,
+        code,
+        goals: s.goals || 0,
+        assists: (s.assists === null || s.assists === undefined) ? null : s.assists
+      };
+    });
+  } catch (err) {
+    console.warn('[Scorers] 取得失敗。ダミーデータを表示します。', err);
+    return null;
+  }
+}
+
+let scorersData = [];
+let activeTab = 'goals';
+
+function renderRankList() {
+  const list = document.getElementById('rankList');
+  const sorted = [...scorersData].sort((a, b) => {
+    if (activeTab === 'goals') return b.goals - a.goals;
+    return (b.assists || 0) - (a.assists || 0);
+  });
+  list.innerHTML = sorted.map((s, i) => {
+    const t = teamByCode[s.code] || { name: s.code };
+    const value = activeTab === 'goals' ? s.goals : (s.assists === null ? '—' : s.assists);
+    return `
+      <div class="rank-row">
+        <div class="rank-num">${i + 1}</div>
+        ${crestImg(s.code, 30, 'rank-crest')}
+        <div class="rank-info">
+          <div class="rank-player">${s.name}</div>
+          <div class="rank-club">${t.name}</div>
+        </div>
+        <div class="rank-value">${value}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    renderRankList();
+  });
+});
+
+async function initScorers() {
+  const note = document.getElementById('dataSourceNote');
+  const apiRows = await fetchScorersFromAPI();
+  if (apiRows && apiRows.length) {
+    scorersData = apiRows;
+    if (note) note.textContent = '📡 Football-Data.org からライブデータを取得中です。';
+  } else {
+    scorersData = generateDummyScorers();
+    if (note) note.textContent = '🧪 サンプル（ダミー）データを表示中です。';
+  }
+  renderRankList();
+}
+initScorers();
+</script>
+</body>
+</html>

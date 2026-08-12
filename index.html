@@ -99,16 +99,6 @@
   .tz-toggle button.active { background: var(--pitch-light); color: var(--gold); }
 
   .fav-wrap { position: relative; }
-  .fav-panel {
-    display: none; position: absolute; top: 42px; left: 0; z-index: 20;
-    background: var(--card); color: var(--ink); border-radius: 12px; padding: 14px;
-    width: 240px; box-shadow: 0 12px 32px rgba(0,0,0,0.35);
-  }
-  .fav-panel.open { display: block; }
-  .fav-panel p { margin: 0 0 10px; font-size: 12px; color: var(--ink-soft); letter-spacing: 0.03em; }
-  .fav-list { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; }
-  .fav-row { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
-  .fav-row input { accent-color: var(--gold-deep); }
 
   .day-group { margin-bottom: 30px; }
   .day-heading { font-family: 'Oswald', sans-serif; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); display: flex; align-items: center; gap: 12px; margin: 0 0 12px; }
@@ -121,21 +111,35 @@
     transition: box-shadow 0.15s ease; overflow: hidden;
   }
   .match:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.25); }
-  .match.fav-match::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--gold); border-radius: 14px 0 0 14px; z-index: 2; }
   .match-row { position: relative; z-index: 1; display: grid; grid-template-columns: 60px 1fr; align-items: center; gap: 14px; }
   .kickoff { font-family: 'Oswald', sans-serif; text-align: center; line-height: 1.15; }
   .kickoff .time { font-size: 18px; font-weight: 600; }
   .kickoff .tzlabel { font-size: 10px; color: var(--ink-soft); letter-spacing: 0.05em; }
   .kickoff .status { font-size: 10px; color: var(--loss); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
   .kickoff .status.upcoming { color: var(--gold-deep); }
+  .kickoff .status.live { color: #d1352c; display: flex; align-items: center; gap: 4px; justify-content: center; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #d1352c; animation: livePulse 1.2s ease-in-out infinite; }
+  @keyframes livePulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.7); } }
+  .venue-line { font-size: 10px; color: var(--ink-soft); text-align: center; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70px; }
 
   .teams { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
   .side {
     display: flex; align-items: center; gap: 8px;
-    flex: 1; min-width: 0; padding: 6px 4px; border-radius: 10px;
+    flex: 1; min-width: 0; padding: 6px 8px; border-radius: 10px;
+    border-top: 3px solid transparent; transition: background 0.15s ease;
   }
   .side.home { justify-content: flex-end; text-align: right; }
   .side.away { justify-content: flex-start; text-align: left; flex-direction: row-reverse; }
+  /* お気に入りチームは「そのチーム側」だけをハイライトする（ホーム/アウェイを問わず誤認しないように） */
+  .side.fav { background: rgba(217,164,65,0.16); }
+  .fav-star { color: var(--gold-deep); font-size: 11px; flex-shrink: 0; }
+  .result-badge {
+    font-family: 'Oswald', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.04em;
+    padding: 1px 5px; border-radius: 4px; margin-top: 2px; display: inline-block;
+  }
+  .result-badge.win { background: rgba(46,125,70,0.15); color: #2e7d46; }
+  .result-badge.loss { background: rgba(173,74,66,0.15); color: var(--loss); }
+  .result-badge.draw { background: rgba(77,90,79,0.15); color: var(--ink-soft); }
   .side-watermark {
     position: absolute; top: 50%; transform: translateY(-50%);
     width: 190px; height: 190px; object-fit: contain; opacity: 0.16;
@@ -167,6 +171,23 @@
   .bookmark-btn { position: absolute; top: 10px; right: 10px; z-index: 3; background: none; border: none; cursor: pointer; padding: 4px; color: var(--ink-soft); }
   .bookmark-btn.on { color: var(--gold-deep); }
   .bookmark-btn svg { width: 18px; height: 18px; display: block; }
+
+  /* ---- ダービーマッチ演出 ---- */
+  .match.derby {
+    background: linear-gradient(135deg, var(--card) 0%, #fff6e2 100%);
+    box-shadow: 0 0 0 2px var(--gold), 0 6px 20px rgba(217,164,65,0.25);
+  }
+  .match.derby:hover { box-shadow: 0 0 0 2px var(--gold), 0 8px 26px rgba(217,164,65,0.4); }
+  .derby-banner {
+    position: relative; z-index: 1; display: flex; align-items: center; gap: 6px;
+    font-family: 'Oswald', sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em;
+    color: var(--gold-deep); text-transform: uppercase; margin-bottom: 8px;
+  }
+  .derby-banner::before { content: '🔥'; font-size: 11px; }
+
+  /* ---- ネタバレ防止マスク ---- */
+  .score.masked { cursor: pointer; letter-spacing: 0.05em; }
+  .score-mask-hint { font-size: 9px; color: var(--ink-soft); display: block; font-family: 'Inter', sans-serif; font-weight: 500; margin-top: 1px; }
 
   .odds-line { margin-top: 10px; display: flex; align-items: center; gap: 8px; }
   .odds-bar { flex: 1; height: 5px; border-radius: 999px; overflow: hidden; display: flex; background: #e5e0d0; }
@@ -238,6 +259,23 @@
   .scorer-item { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
   .scorer-item .mins { color: var(--ink-soft); font-size: 11px; }
 
+  /* ---- フォーム / H2H ---- */
+  .form-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 6px; }
+  .form-col-title { font-size: 11px; color: var(--ink-soft); margin-bottom: 6px; text-align: center; }
+  .form-dots { display: flex; gap: 5px; justify-content: center; }
+  .form-dot {
+    width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 700; color: white;
+  }
+  .form-dot.W { background: #2e7d46; }
+  .form-dot.D { background: #8a8370; }
+  .form-dot.L { background: var(--loss); }
+  .h2h-list { display: flex; flex-direction: column; gap: 6px; }
+  .h2h-item { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 6px 0; border-bottom: 1px dashed var(--card-line); }
+  .h2h-item:last-child { border-bottom: none; }
+  .h2h-date { color: var(--ink-soft); font-size: 11px; }
+  .h2h-score { font-family: 'Oswald', sans-serif; font-weight: 600; }
+
   .footnote { margin-top: 34px; font-size: 12px; color: var(--chalk-dim); line-height: 1.7; border-top: 1px dashed var(--line); padding-top: 16px; }
 
   @media (max-width: 680px) {
@@ -286,34 +324,21 @@
 <script src="shared.js"></script>
 </head>
 <body>
-<header class="site-header" id="siteHeader">
-  <div class="site-header-inner">
-    <span class="brand">⚽ <span class="brand-mark">PL</span> Calendar</span>
-    <nav class="site-nav">
-      <a href="index.html" class="nav-link active">カレンダー</a>
-      <a href="standings.html" class="nav-link">順位表</a>
-    </nav>
-  </div>
-</header>
+<div id="siteHeaderMount"></div>
 <div class="wrap">
   <p class="kicker">2026-27 season · 全38節対応</p>
   <h1>Kickoff<br><span>Calendar</span></h1>
-  <p class="sub">プレミアリーグ 2026-27シーズンの全日程。チーム・節での絞り込み、お気に入り登録、ブックマーク、日本時間／現地時間の切り替えに対応しています。</p>
+  <p class="sub">プレミアリーグの全日程。チーム・節での絞り込み、お気に入りハイライト、ブックマーク、日本時間／現地時間の切り替えに対応しています。</p>
   <p class="sub" id="dataSourceNote" style="margin-top:-14px;font-size:12px;">📡 データ確認中…</p>
 
   <div class="toolbar">
     <select class="select" id="teamFilter"></select>
     <select class="select" id="mwFilter"></select>
+    <select class="select" id="seasonFilter"></select>
 
-    <div class="fav-wrap">
-      <button class="chip-btn" id="favToggleBtn">★ お気に入り</button>
-      <div class="fav-panel" id="favPanel">
-        <p>お気に入りチームを選択</p>
-        <div class="fav-list" id="favList"></div>
-      </div>
-    </div>
-    <button class="chip-btn" id="favOnlyBtn">お気に入りのみ</button>
+    <button class="chip-btn" id="favOnlyBtn">★ お気に入りのみ</button>
     <button class="chip-btn" id="bookmarkOnlyBtn">🔖 ブックマークのみ</button>
+    <a class="chip-btn" href="settings.html" style="text-decoration:none;">⚙ お気に入り設定</a>
 
     <div class="spacer"></div>
     <div class="tz-toggle" id="tzToggle">
@@ -326,12 +351,17 @@
     </div>
   </div>
 
+  <div class="toolbar" style="margin-top:-8px;">
+    <button class="chip-btn" id="exportAllBtn">📅 全試合をカレンダーに追加</button>
+    <button class="chip-btn" id="exportFavBtn">📅 マイチームの試合を追加</button>
+  </div>
+
   <div id="listView"></div>
   <div id="calendarView" style="display:none;"></div>
 
   <p class="footnote">
-    試合結果・スタッツ・スタメンはアプリのデータ構造を示すためのダミーデータです（第1〜6節を「終了済み」として例示）。実データに接続する場合は fixtures 配列を API レスポンスに差し替えてください。<br>
-    勝敗予想（Win probability）は参考値です。お気に入り・ブックマークは端末のブラウザ内（localStorage）に保存されます。
+    試合結果・スタッツ・スタメンはアプリのデータ構造を示すためのダミーデータです（今シーズンは第1〜6節を「終了済み」として例示、過去シーズンは全節が終了済みとして表示されます）。実データに接続する場合は fixtures 配列を API レスポンスに差し替えてください。<br>
+    勝敗予想（Win probability）は参考値です。お気に入り・ブックマーク・ネタバレ防止設定は端末のブラウザ内（localStorage）に保存されます。設定の変更は <a href="settings.html" style="color:var(--gold-deep);">設定ページ</a> から行えます。
   </p>
 </div>
 
@@ -385,17 +415,22 @@ function genScorers(code, goals, seed) {
   return list.sort((a, b) => a.minute - b.minute);
 }
 
-function generateDummyFixtures() {
+function generateDummyFixtures(seasonYear) {
+  seasonYear = seasonYear || SEASON_YEAR;
+  const seasonStart = Date.UTC(seasonYear, 7, 22);
+  const isPastSeason = seasonYear < SEASON_YEAR;
   const list = [];
   allRounds.forEach((round, ri) => {
     const mw = ri + 1;
-    const baseDay = SEASON_START + ri * 7 * 86400000;
+    const baseDay = seasonStart + ri * 7 * 86400000;
     round.forEach(([home, away], mi) => {
       const hourUtc = KO_HOURS_UTC[mi % KO_HOURS_UTC.length];
       const start = new Date(baseDay + hourUtc * 3600000);
-      const id = `mw${mw}-${home}-${away}`;
-      const seed = mw * 137 + mi * 29;
-      const finished = mw <= 6;
+      const id = `mw${mw}-${home}-${away}-${seasonYear}`;
+      const seed = mw * 137 + mi * 29 + seasonYear * 3;
+      // 過去シーズンは全節終了済み、今シーズンは第1〜6節のみ終了済みとして例示する
+      const finished = isPastSeason ? true : mw <= 6;
+      const status = finished ? 'FINISHED' : 'SCHEDULED';
       let result = null;
       if (finished) {
         const hg = Math.floor(seededRand(seed) * 4);
@@ -416,7 +451,7 @@ function generateDummyFixtures() {
       const aProb = Math.round(seededRand(seed + 31) * (95 - hProb));
       const dProb = 100 - hProb - aProb;
       list.push({
-        id, mw, home, away, start: start.toISOString(),
+        id, mw, home, away, start: start.toISOString(), seasonYear, status,
         prob: { home: hProb, draw: Math.max(dProb, 5), away: Math.max(aProb, 5) },
         finished, result, source: 'dummy'
       });
@@ -425,21 +460,27 @@ function generateDummyFixtures() {
   return list;
 }
 
-function mapApiMatch(m) {
+function mapApiMatch(m, seasonYear) {
   const homeCode = TLA_TO_CODE[m.homeTeam.tla] || m.homeTeam.tla || m.homeTeam.shortName;
   const awayCode = TLA_TO_CODE[m.awayTeam.tla] || m.awayTeam.tla || m.awayTeam.shortName;
   ensureTeamExists(homeCode, m.homeTeam);
   ensureTeamExists(awayCode, m.awayTeam);
 
   const finished = m.status === 'FINISHED';
+  const isLive = m.status === 'IN_PLAY' || m.status === 'PAUSED';
   const ft = m.score && m.score.fullTime ? m.score.fullTime : null;
+  const liveScore = m.score && m.score.fullTime ? m.score.fullTime : null;
   const result = (finished && ft && ft.home !== null && ft.away !== null) ? {
     home: ft.home, away: ft.away,
     // 無料プランではスタッツが返らないため null にしておき、モーダル側で非表示にする
     possession: null, shots: null, onTarget: null, corners: null, fouls: null,
     scorers: { home: [], away: [] },
     lineups: { home: [], away: [] }
-  } : null;
+  } : (isLive && liveScore ? {
+    home: liveScore.home || 0, away: liveScore.away || 0,
+    possession: null, shots: null, onTarget: null, corners: null, fouls: null,
+    scorers: { home: [], away: [] }, lineups: { home: [], away: [] }
+  } : null);
 
   return {
     id: `fd-${m.id}`,
@@ -447,6 +488,8 @@ function mapApiMatch(m) {
     home: homeCode,
     away: awayCode,
     start: m.utcDate,
+    seasonYear: seasonYear,
+    status: isLive ? 'LIVE' : m.status,
     prob: null, // 実データ利用時は予想勝率を表示しない（未提供のため）
     finished,
     result,
@@ -456,23 +499,23 @@ function mapApiMatch(m) {
 
 let lastFetchError = null;
 
-async function fetchFixturesFromAPI() {
+async function fetchFixturesFromAPI(seasonYear) {
   if (!hasApiAccess()) {
     lastFetchError = 'no-key';
     return null;
   }
   try {
-    const res = await fetch(apiUrl(`/competitions/${COMPETITION_CODE}/matches?season=${SEASON_YEAR}`), apiFetchOptions());
+    const res = await fetch(apiUrl(`/competitions/${COMPETITION_CODE}/matches?season=${seasonYear}`), apiFetchOptions());
     if (res.status === 403) { lastFetchError = 'auth: APIキーが無効、または未登録です（403）。'; return null; }
     if (res.status === 429) { lastFetchError = 'rate-limit: リクエスト回数の上限に達しました（429）。少し時間を置いて再読み込みしてください。'; return null; }
     if (!res.ok) { lastFetchError = `http-${res.status}: APIが ${res.status} を返しました。`; return null; }
     const data = await res.json();
     if (!data.matches || !data.matches.length) {
-      lastFetchError = `empty: season=${SEASON_YEAR} の試合データが0件でした（対象シーズンがまだ登録されていない可能性があります）。`;
+      lastFetchError = `empty: season=${seasonYear} の試合データが0件でした（対象シーズンがまだ登録されていない可能性があります）。`;
       return null;
     }
     lastFetchError = null;
-    return data.matches.map(mapApiMatch);
+    return data.matches.map(m => mapApiMatch(m, seasonYear));
   } catch (err) {
     // fetchがネットワークエラーやCORSブロックで失敗すると、ブラウザは詳細を隠して
     // 単なる TypeError("Failed to fetch") しか返さない仕様になっている。
@@ -486,17 +529,22 @@ async function fetchFixturesFromAPI() {
   }
 }
 
-let fixtures = generateDummyFixtures();
+let fixtures = generateDummyFixtures(SEASON_YEAR);
 let usingLiveData = false;
+let didAutoScroll = false;
 
-async function initFixtures() {
-  const apiFixtures = await fetchFixturesFromAPI();
+async function initFixtures(seasonYear) {
+  seasonYear = seasonYear || SEASON_YEAR;
   const note = document.getElementById('dataSourceNote');
+  if (note) note.textContent = '📡 データ確認中…';
+  const apiFixtures = await fetchFixturesFromAPI(seasonYear);
   if (apiFixtures && apiFixtures.length) {
     fixtures = apiFixtures;
     usingLiveData = true;
     if (note) note.textContent = '📡 Football-Data.org からライブデータを取得中です。';
   } else {
+    fixtures = generateDummyFixtures(seasonYear);
+    usingLiveData = false;
     let reason = '';
     if (lastFetchError === 'no-key') reason = 'APIキーが未設定です。';
     else if (lastFetchError) reason = lastFetchError.replace(/^[a-z-]+:\s*/, '');
@@ -506,15 +554,19 @@ async function initFixtures() {
   mwFilter.innerHTML = `<option value="">全${Math.max(...fixtures.map(f => f.mw), 38)}節</option>` +
     Array.from(new Set(fixtures.map(f => f.mw))).sort((a, b) => a - b).map(n => `<option value="${n}">第${n}節</option>`).join('');
   renderAll();
+  if (!didAutoScroll && seasonYear === SEASON_YEAR) {
+    didAutoScroll = true;
+    scrollToNearestUpcoming();
+  }
 }
 
 let state = {
   team: '', mw: '', favOnly: false, bookmarkOnly: false,
-  view: 'list', tz: 'jst', calMonthOffset: 0, calSelectedDay: null
+  view: 'list', tz: 'jst', calMonthOffset: 0, calSelectedDay: null, seasonYear: SEASON_YEAR
 };
-let favorites = JSON.parse(localStorage.getItem('pl_favorite_teams') || '[]');
+let settings = loadSettings();
+let favorites = settings.favorites;
 let bookmarks = JSON.parse(localStorage.getItem('pl_bookmarks') || '[]');
-function saveFavorites() { localStorage.setItem('pl_favorite_teams', JSON.stringify(favorites)); }
 function saveBookmarks() { localStorage.setItem('pl_bookmarks', JSON.stringify(bookmarks)); }
 
 /* 「現地時間」は視聴者の端末設定に依存させず、常にイギリス（ロンドン）時間で表示する。
@@ -548,15 +600,49 @@ function applyFilters(list) {
 
 function matchCardHTML(f) {
   const d = new Date(f.start);
-  const isFav = favorites.includes(f.home) || favorites.includes(f.away);
+  const homeIsFav = favorites.includes(f.home);
+  const awayIsFav = favorites.includes(f.away);
   const isBookmarked = bookmarks.includes(f.id);
   const homeT = teamByCode[f.home], awayT = teamByCode[f.away];
-  const scoreHTML = f.finished
-    ? `<div class="score">${f.result.home}<span class="sep">-</span>${f.result.away}</div>`
-    : `<div class="vs-label">VS</div>`;
-  const statusHTML = f.finished ? `<div class="status">終了</div>` : `<div class="status upcoming">予定</div>`;
+  const isLive = f.status === 'LIVE';
+  const isCurrentSeason = f.seasonYear === SEASON_YEAR;
+  const spoilerActive = settings.spoilerProtection && f.finished && isCurrentSeason && !isRevealed(f.id);
+
+  let scoreHTML;
+  if (f.finished || isLive) {
+    if (spoilerActive) {
+      scoreHTML = `<div class="score masked" data-reveal="${f.id}">🔒<span class="score-mask-hint">タップで表示</span></div>`;
+    } else {
+      const winner = f.result.home > f.result.away ? 'home' : (f.result.home < f.result.away ? 'away' : 'draw');
+      scoreHTML = `<div class="score">${f.result.home}<span class="sep">-</span>${f.result.away}</div>`;
+      // 勝敗バッジは各サイド側に付与するため side-label 側で組み立てる
+      f._winner = winner;
+    }
+  } else {
+    scoreHTML = `<div class="vs-label">VS</div>`;
+  }
+
+  let statusHTML;
+  if (isLive) {
+    statusHTML = `<div class="status live"><span class="live-dot"></span>LIVE</div>`;
+  } else if (f.finished) {
+    statusHTML = `<div class="status">終了</div>`;
+  } else {
+    statusHTML = `<div class="status upcoming">予定</div>`;
+  }
+
+  function resultBadge(side) {
+    if (spoilerActive || !(f.finished && f._winner)) return '';
+    if (f._winner === 'draw') return `<span class="result-badge draw">D</span>`;
+    if (f._winner === side) return `<span class="result-badge win">W</span>`;
+    return `<span class="result-badge loss">L</span>`;
+  }
+
+  const derby = findDerby(f.home, f.away);
+  const derbyBannerHTML = derby ? `<div class="derby-banner">${derby.name}</div>` : '';
+
   return `
-    <div class="match ${isFav ? 'fav-match' : ''}" data-id="${f.id}">
+    <div class="match ${derby ? 'derby' : ''}" data-id="${f.id}">
       ${watermarkImg(f.home, 'home')}
       ${watermarkImg(f.away, 'away')}
       <button class="bookmark-btn ${isBookmarked ? 'on' : ''}" data-bookmark="${f.id}" aria-label="ブックマーク">
@@ -567,26 +653,32 @@ function matchCardHTML(f) {
           <div class="time">${fmtTime(d)}</div>
           <div class="tzlabel">${tzLabelFor(d)}</div>
           ${statusHTML}
+          ${homeT.venue ? `<div class="venue-line" title="${homeT.venue}">${homeT.venue}</div>` : ''}
         </div>
-        <div class="teams">
-          <div class="side home">
-            ${crestImg(f.home, 32)}
-            <div class="side-label">
-              <span class="team-name">${homeT.name}</span>
-              <span class="ha-tag">Home</span>
+        <div>
+          ${derbyBannerHTML}
+          <div class="teams">
+            <div class="side home ${homeIsFav ? 'fav' : ''}" style="border-top-color:${homeT.color}22;">
+              ${crestImg(f.home, 32)}
+              <div class="side-label">
+                <span class="team-name">${homeIsFav ? '<span class="fav-star">★</span> ' : ''}${homeT.name}</span>
+                <span class="ha-tag">Home</span>
+                ${resultBadge('home')}
+              </div>
             </div>
-          </div>
-          ${scoreHTML}
-          <div class="side away">
-            ${crestImg(f.away, 32)}
-            <div class="side-label">
-              <span class="team-name">${awayT.name}</span>
-              <span class="ha-tag">Away</span>
+            ${scoreHTML}
+            <div class="side away ${awayIsFav ? 'fav' : ''}" style="border-top-color:${awayT.color}22;">
+              ${crestImg(f.away, 32)}
+              <div class="side-label">
+                <span class="team-name">${awayIsFav ? '<span class="fav-star">★</span> ' : ''}${awayT.name}</span>
+                <span class="ha-tag">Away</span>
+                ${resultBadge('away')}
+              </div>
             </div>
           </div>
         </div>
       </div>
-      ${(!f.finished && f.prob) ? `
+      ${(!f.finished && !isLive && f.prob) ? `
       <div class="odds-line">
         <div class="odds-bar">
           <div class="home" style="width:${f.prob.home}%"></div>
@@ -632,7 +724,7 @@ function renderList() {
 
 function renderCalendar() {
   const el = document.getElementById('calendarView');
-  const baseMonth = new Date(SEASON_START);
+  const baseMonth = new Date(Date.UTC(state.seasonYear, 7, 22));
   const monthDate = new Date(Date.UTC(baseMonth.getUTCFullYear(), baseMonth.getUTCMonth() + state.calMonthOffset, 1));
   const y = monthDate.getUTCFullYear(), m = monthDate.getUTCMonth();
   const monthLabel = new Intl.DateTimeFormat('ja-JP', { year: 'numeric', month: 'long', timeZone: 'UTC' }).format(monthDate);
@@ -695,48 +787,6 @@ function renderCalendar() {
   bindCardEvents(el);
 }
 
-function pad2(n) { return String(n).padStart(2, '0'); }
-function toICSDate(d) {
-  return d.getUTCFullYear() + pad2(d.getUTCMonth() + 1) + pad2(d.getUTCDate()) + 'T' + pad2(d.getUTCHours()) + pad2(d.getUTCMinutes()) + pad2(d.getUTCSeconds()) + 'Z';
-}
-function buildCalendarLinks(f) {
-  const homeT = teamByCode[f.home], awayT = teamByCode[f.away];
-  const start = new Date(f.start);
-  const end = new Date(start.getTime() + 2 * 3600000);
-  const title = `${homeT.name} vs ${awayT.name}`;
-  const details = `プレミアリーグ 第${f.mw}節\n${homeT.name} (Home) vs ${awayT.name} (Away)`;
-  const location = 'Premier League';
-  const gcalUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
-    + '&text=' + encodeURIComponent(title)
-    + '&dates=' + toICSDate(start) + '/' + toICSDate(end)
-    + '&details=' + encodeURIComponent(details)
-    + '&location=' + encodeURIComponent(location);
-  const icsContent = [
-    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//PL Matchday Calendar//JP', 'CALSCALE:GREGORIAN', 'BEGIN:VEVENT',
-    'UID:' + f.id + '@pl-matchday-calendar',
-    'DTSTAMP:' + toICSDate(new Date()),
-    'DTSTART:' + toICSDate(start),
-    'DTEND:' + toICSDate(end),
-    'SUMMARY:' + title,
-    'DESCRIPTION:' + details.replace(/\n/g, '\\n'),
-    'LOCATION:' + location,
-    'END:VEVENT', 'END:VCALENDAR'
-  ].join('\r\n');
-  return { gcalUrl, icsContent };
-}
-function downloadICS(f) {
-  const { icsContent } = buildCalendarLinks(f);
-  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${f.home}-vs-${f.away}-mw${f.mw}.ics`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
 function statRow(label, home, away, maxVal) {
   const hPct = Math.round((home / maxVal) * 100);
   const aPct = 100 - hPct;
@@ -753,13 +803,74 @@ function scorerColHTML(list) {
   if (!list.length) return `<p style="color:var(--ink-soft);font-size:12px;">得点なし</p>`;
   return list.map(s => `<div class="scorer-item"><span>${s.player}${s.assist ? ` <span style="color:var(--ink-soft)">(A: ${s.assist})</span>` : ''}</span><span class="mins">${s.minute}'</span></div>`).join('');
 }
+function computeForm(teamCode, beforeDate, excludeId) {
+  return fixtures
+    .filter(x => x.finished && x.result && x.id !== excludeId && (x.home === teamCode || x.away === teamCode) && new Date(x.start) < beforeDate)
+    .sort((a, b) => new Date(b.start) - new Date(a.start))
+    .slice(0, 5)
+    .reverse()
+    .map(x => {
+      const isHome = x.home === teamCode;
+      const gf = isHome ? x.result.home : x.result.away;
+      const ga = isHome ? x.result.away : x.result.home;
+      return gf > ga ? 'W' : (gf < ga ? 'L' : 'D');
+    });
+}
+function formDotsHTML(codes) {
+  if (!codes.length) return `<p style="color:var(--ink-soft);font-size:11px;text-align:center;">今シーズンのデータなし</p>`;
+  return `<div class="form-dots">${codes.map(r => `<span class="form-dot ${r}">${r}</span>`).join('')}</div>`;
+}
+function computeH2H(codeA, codeB, excludeId) {
+  return fixtures
+    .filter(x => x.finished && x.result && x.id !== excludeId &&
+      ((x.home === codeA && x.away === codeB) || (x.home === codeB && x.away === codeA)))
+    .sort((a, b) => new Date(b.start) - new Date(a.start));
+}
+
 function openModal(f) {
   const homeT = teamByCode[f.home], awayT = teamByCode[f.away];
-  const { gcalUrl } = buildCalendarLinks(f);
+  const gcalUrl = buildGCalUrl(f);
+  const isCurrentSeason = f.seasonYear === SEASON_YEAR;
+  const spoilerActive = settings.spoilerProtection && f.finished && isCurrentSeason && !isRevealed(f.id);
 
-  const scoreBlock = f.finished
-    ? `<div class="modal-score">${f.result.home} - ${f.result.away}</div>`
-    : `<div class="modal-score" style="font-size:22px;color:var(--ink-soft);">${fmtTime(new Date(f.start))} ${tzLabelFor(new Date(f.start))}</div>`;
+  let scoreBlock;
+  if (f.finished) {
+    if (spoilerActive) {
+      scoreBlock = `<div class="modal-score score masked" data-reveal="${f.id}" style="font-size:28px;">🔒<span class="score-mask-hint">タップでスコアを表示</span></div>`;
+    } else {
+      scoreBlock = `<div class="modal-score">${f.result.home} - ${f.result.away}</div>`;
+    }
+  } else {
+    scoreBlock = `<div class="modal-score" style="font-size:22px;color:var(--ink-soft);">${fmtTime(new Date(f.start))} ${tzLabelFor(new Date(f.start))}</div>`;
+  }
+
+  // フォーム（直近5試合）とH2H（直接対決）は、今シーズンにネタバレ防止がかかっている場合は隠す
+  const showFormAndH2H = !spoilerActive;
+  const homeForm = showFormAndH2H ? computeForm(f.home, new Date(f.start), f.id) : [];
+  const awayForm = showFormAndH2H ? computeForm(f.away, new Date(f.start), f.id) : [];
+  const h2h = showFormAndH2H ? computeH2H(f.home, f.away, f.id) : [];
+  const formH2HHTML = showFormAndH2H ? `
+    <p class="section-title">直近5試合のフォーム</p>
+    <div class="form-cols">
+      <div>
+        <p class="form-col-title">${homeT.name}</p>
+        ${formDotsHTML(homeForm)}
+      </div>
+      <div>
+        <p class="form-col-title">${awayT.name}</p>
+        ${formDotsHTML(awayForm)}
+      </div>
+    </div>
+    <p class="section-title">直接対決（今シーズン）</p>
+    ${h2h.length ? `
+      <div class="h2h-list">
+        ${h2h.map(x => {
+          const xHomeT = teamByCode[x.home], xAwayT = teamByCode[x.away];
+          return `<div class="h2h-item"><span class="h2h-date">第${x.mw}節</span><span>${xHomeT.name} <span class="h2h-score">${x.result.home}-${x.result.away}</span> ${xAwayT.name}</span></div>`;
+        }).join('')}
+      </div>
+    ` : `<p style="color:var(--ink-soft);font-size:12px;">今シーズンの対戦はまだありません。</p>`}
+  ` : `<p class="modal-sub" style="margin-top:6px;">ネタバレ防止がONのため、フォーム・直接対決の結果も非表示にしています。</p>`;
 
   let bodyHTML = '';
   if (f.finished) {
@@ -769,7 +880,9 @@ function openModal(f) {
     const hasLineups = !!(r && r.lineups.home.length && r.lineups.away.length);
 
     let statsHTML = '';
-    if (hasStats) {
+    if (spoilerActive) {
+      statsHTML = `<p class="modal-sub" style="margin-top:6px;">スコアが未確認のため、スタッツ・得点者は表示していません。</p>`;
+    } else if (hasStats) {
       const maxShots = Math.max(r.shots.home, r.shots.away, 1);
       const maxCorners = Math.max(r.corners.home, r.corners.away, 1);
       const maxOnTarget = Math.max(r.onTarget.home, r.onTarget.away, 1);
@@ -787,7 +900,8 @@ function openModal(f) {
     }
 
     bodyHTML = `
-      ${hasScorers ? `
+      ${formH2HHTML}
+      ${(!spoilerActive && hasScorers) ? `
       <p class="section-title">得点者</p>
       <div class="scorers-cols">
         <div>${scorerColHTML(r.scorers.home)}</div>
@@ -796,7 +910,7 @@ function openModal(f) {
 
       ${statsHTML}
 
-      ${hasLineups ? `
+      ${(!spoilerActive && hasLineups) ? `
       <p class="section-title">スターティングメンバー</p>
       <div class="lineup-cols">
         <ul class="lineup-list">${r.lineups.home.map(p => `<li><span>${p}</span></li>`).join('')}</ul>
@@ -804,17 +918,20 @@ function openModal(f) {
       </div>` : ''}
     `;
   } else {
-    bodyHTML = f.prob ? `
+    bodyHTML = `
+      ${formH2HHTML}
+      ${f.prob ? `
       <p class="section-title">勝敗予想</p>
       ${statRow('勝敗予想 (%)', f.prob.home, f.prob.away, f.prob.home + f.prob.away)}
       <p class="modal-sub" style="margin-top:-4px;">引き分け予想: ${f.prob.draw}%</p>
-    ` : `<p class="modal-sub" style="margin-top:6px;">この試合はまだ開催されていません。カレンダーに追加してキックオフをお見逃しなく。</p>`;
+      ` : `<p class="modal-sub" style="margin-top:6px;">この試合はまだ開催されていません。カレンダーに追加してキックオフをお見逃しなく。</p>`}
+    `;
   }
 
   document.getElementById('modalContent').innerHTML = `
     <button class="modal-close" id="modalCloseBtn" aria-label="閉じる">&times;</button>
     <div class="modal-head">
-      <p class="modal-mw">第${f.mw}節 · ${fmtDayLabel(new Date(f.start))}</p>
+      <p class="modal-mw">第${f.mw}節 · ${fmtDayLabel(new Date(f.start))}${f.seasonYear !== SEASON_YEAR ? `（${f.seasonYear}-${String(f.seasonYear + 1).slice(2)}シーズン）` : ''}</p>
       <div class="modal-teams">
         <div class="modal-team">
           ${crestImg(f.home, 52, 'modal-crest')}
@@ -826,7 +943,7 @@ function openModal(f) {
           <span class="modal-team-name">${awayT.name}</span>
         </div>
       </div>
-      <p class="modal-sub">Home: ${homeT.name} / Away: ${awayT.name}</p>
+      <p class="modal-sub">Home: ${homeT.name} / Away: ${awayT.name}${homeT.venue ? ` ・ ${homeT.venue}` : ''}</p>
       <div class="cal-actions">
         <a class="cal-btn" href="${gcalUrl}" target="_blank" rel="noopener">Googleカレンダーに追加</a>
         <button class="cal-btn outline" id="icsBtn">ICSファイルを保存</button>
@@ -836,7 +953,16 @@ function openModal(f) {
   `;
   document.getElementById('modalOverlay').classList.add('open');
   document.getElementById('modalCloseBtn').onclick = closeModal;
-  document.getElementById('icsBtn').onclick = () => downloadICS(f);
+  document.getElementById('icsBtn').onclick = () => downloadICSForMatches([f], `${f.home}-vs-${f.away}-mw${f.mw}.ics`);
+  const revealBtn = document.querySelector('#modalContent [data-reveal]');
+  if (revealBtn) {
+    revealBtn.addEventListener('click', () => {
+      markRevealed(f.id);
+      closeModal();
+      renderAll();
+      setTimeout(() => openModal(fixtures.find(x => x.id === f.id)), 50);
+    });
+  }
 }
 function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
 document.getElementById('modalOverlay').addEventListener('click', e => {
@@ -847,6 +973,7 @@ function bindCardEvents(root) {
   root.querySelectorAll('.match').forEach(card => {
     card.addEventListener('click', e => {
       if (e.target.closest('.bookmark-btn')) return;
+      if (e.target.closest('[data-reveal]')) return;
       const f = fixtures.find(x => x.id === card.dataset.id);
       if (f) openModal(f);
     });
@@ -858,6 +985,13 @@ function bindCardEvents(root) {
       if (bookmarks.includes(id)) bookmarks = bookmarks.filter(x => x !== id);
       else bookmarks.push(id);
       saveBookmarks();
+      renderAll();
+    });
+  });
+  root.querySelectorAll('[data-reveal]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      markRevealed(el.dataset.reveal);
       renderAll();
     });
   });
@@ -884,29 +1018,15 @@ const mwFilter = document.getElementById('mwFilter');
 mwFilter.innerHTML = `<option value="">全38節</option>` + Array.from({ length: 38 }, (_, i) => `<option value="${i + 1}">第${i + 1}節</option>`).join('');
 mwFilter.onchange = () => { state.mw = mwFilter.value; renderAll(); };
 
-const favToggleBtn = document.getElementById('favToggleBtn');
-const favPanel = document.getElementById('favPanel');
-favToggleBtn.onclick = () => favPanel.classList.toggle('open');
-document.addEventListener('click', e => {
-  if (!e.target.closest('.fav-wrap')) favPanel.classList.remove('open');
-});
-function renderFavList() {
-  document.getElementById('favList').innerHTML = TEAMS.map(t => `
-    <label class="fav-row">
-      <input type="checkbox" value="${t.code}" ${favorites.includes(t.code) ? 'checked' : ''}>
-      ${t.name}
-    </label>
-  `).join('');
-  document.querySelectorAll('#favList input').forEach(cb => {
-    cb.onchange = () => {
-      if (cb.checked) favorites.push(cb.value);
-      else favorites = favorites.filter(c => c !== cb.value);
-      saveFavorites();
-      renderAll();
-    };
-  });
-}
-renderFavList();
+const seasonFilter = document.getElementById('seasonFilter');
+seasonFilter.innerHTML = AVAILABLE_SEASONS.map(s => `<option value="${s.value}">${s.label}</option>`).join('');
+seasonFilter.value = String(SEASON_YEAR);
+seasonFilter.onchange = () => {
+  state.seasonYear = Number(seasonFilter.value);
+  state.mw = ''; mwFilter.value = '';
+  state.calMonthOffset = 0; state.calSelectedDay = null;
+  initFixtures(state.seasonYear);
+};
 
 const favOnlyBtn = document.getElementById('favOnlyBtn');
 favOnlyBtn.onclick = () => { state.favOnly = !state.favOnly; favOnlyBtn.classList.toggle('active', state.favOnly); renderAll(); };
@@ -930,15 +1050,36 @@ document.getElementById('viewToggle').querySelectorAll('button').forEach(btn => 
   };
 });
 
-renderAll();
-initFixtures();
+document.getElementById('exportAllBtn').onclick = () => {
+  const list = fixtures.filter(f => f.seasonYear === state.seasonYear);
+  downloadICSForMatches(list, `pl-all-matches-${state.seasonYear}.ics`);
+};
+document.getElementById('exportFavBtn').onclick = () => {
+  if (!favorites.length) { alert('お気に入りチームが設定されていません。設定ページから登録してください。'); return; }
+  const list = fixtures.filter(f => f.seasonYear === state.seasonYear && (favorites.includes(f.home) || favorites.includes(f.away)));
+  if (!list.length) { alert('お気に入りチームの試合が見つかりませんでした。'); return; }
+  downloadICSForMatches(list, `pl-my-teams-${state.seasonYear}.ics`);
+};
 
-const siteHeader = document.getElementById('siteHeader');
-function updateHeaderShadow() {
-  siteHeader.classList.toggle('is-scrolled', window.scrollY > 4);
+// ページ読み込み時、直近の開催予定の試合まで自動スクロールする
+function scrollToNearestUpcoming() {
+  if (state.view !== 'list') return;
+  const now = new Date();
+  const upcoming = fixtures
+    .filter(f => !f.finished && f.status !== 'LIVE')
+    .sort((a, b) => new Date(a.start) - new Date(b.start))
+    .find(f => new Date(f.start) >= now) || fixtures.slice().sort((a, b) => new Date(a.start) - new Date(b.start))[0];
+  if (!upcoming) return;
+  requestAnimationFrame(() => {
+    const el = document.querySelector(`.match[data-id="${upcoming.id}"]`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
 }
-window.addEventListener('scroll', updateHeaderShadow, { passive: true });
-updateHeaderShadow();
+
+renderAll();
+initFixtures(SEASON_YEAR);
+
+renderSiteHeader('schedule');
 </script>
 </body>
 </html>
